@@ -3,30 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر النخبة - نظام الطلبات المتطور</title>
+    <title>متجر النخبة - نسخة السجل المطور</title>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         :root { --main: #2c3e50; --gold: #d4af37; --green: #27ae60; --red: #e74c3c; }
         body { font-family: sans-serif; margin: 0; background: #f4f7f6; text-align: center; }
-        header { background: var(--main); color: white; padding: 20px; }
+        header { background: var(--main); color: white; padding: 25px; position: relative; }
+        .history-btn { position: absolute; top: 10px; left: 10px; background: #34495e; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
         .product-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 20px; }
         .card { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .card img { width: 100%; border-radius: 10px; height: 180px; object-fit: cover; }
         .price { color: var(--red); font-size: 1.2rem; font-weight: bold; margin: 10px 0; }
         .add-btn { background: var(--gold); border: none; padding: 10px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .cart-btn { position: fixed; bottom: 20px; right: 20px; background: var(--green); color: white; padding: 15px 25px; border-radius: 30px; cursor: pointer; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        #cart-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 200; overflow-y: auto; padding: 20px; box-sizing: border-box; }
-        .close-cart { background: #eee; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
-        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
-        .confirm-btn { background: var(--green); color: white; border: none; padding: 15px; width: 90%; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
-        .cancel-btn { background: var(--red); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        #cart-view, #history-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 200; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .close-btn { background: #eee; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; width: 100%; font-weight: bold; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .confirm-btn { background: var(--green); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
+        .order-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 10px; text-align: right; background: #fafafa; }
     </style>
 </head>
 <body>
 
 <header>
+    <button class="history-btn" onclick="showHistory()">📋 طلباتي السابقة</button>
     <h1>متجر النخبة العراقي 🇮🇶</h1>
-    <p>تسوق بأمان - إمكانية إلغاء الطلب متوفرة</p>
+    <p>نظام ذكي لتتبع وإدارة الطلبات</p>
 </header>
 
 <div class="product-list">
@@ -44,28 +46,35 @@
     </div>
 </div>
 
-<div class="cart-btn" onclick="showCart()">فتح السلة (<span id="count">0</span>)</div>
+<div class="cart-btn" onclick="showCart()">🛒 السلة (<span id="count">0</span>)</div>
 
 <div id="cart-view">
-    <div id="cart-inner-content">
-        <button class="close-cart" onclick="hideCart()">رجوع للمتجر ←</button>
-        <h2>سلة التسوق</h2>
+    <div id="cart-content-area">
+        <button class="close-btn" onclick="hideCart()">← العودة للمتجر</button>
+        <h2>مشترياتك الحالية</h2>
         <div id="items"></div>
         <h3 id="total">المجموع: 0 دينار</h3>
         <hr>
         <h3>معلومات التوصيل</h3>
         <input type="text" id="name" placeholder="الاسم الكامل">
-        <input type="text" id="addr" placeholder="العنوان (محافظة - منطقة)">
+        <input type="text" id="addr" placeholder="المحافظة والمنطقة">
         <input type="tel" id="phone" placeholder="رقم الموبايل">
-        <button class="confirm-btn" id="sendBtn" onclick="sendOrder()">إتمام الشراء وإرسال الطلب</button>
+        <button class="confirm-btn" id="sendBtn" onclick="sendOrder()">تأكيد وإرسال الطلب</button>
     </div>
 </div>
 
+<div id="history-view">
+    <button class="close-btn" onclick="document.getElementById('history-view').style.display='none'">إغلاق X</button>
+    <h2>📦 سجل طلباتك السابقة</h2>
+    <div id="history-list"></div>
+</div>
+
 <script>
-    // تهيئة البيانات من صورك السابقة
+    // الإعدادات من صورك
     emailjs.init("YXDPYRNxazZ45eYWS"); 
 
     let cart = [];
+
     function addToCart(n, p) {
         cart.push({name: n, price: p});
         document.getElementById('count').innerText = cart.length;
@@ -77,11 +86,11 @@
         let html = '';
         let total = 0;
         cart.forEach((item, index) => {
-            html += `<p>${item.name} - ${item.price} د.ع <button onclick="remove(${index})">حذف</button></p>`;
+            html += `<p style="display:flex; justify-content:space-between;">${item.name} <span>${item.price} د.ع <button onclick="remove(${index})">❌</button></span></p>`;
             total += item.price;
         });
         document.getElementById('items').innerHTML = html;
-        document.getElementById('total').innerText = "المجموع: " + total + " دينار";
+        document.getElementById('total').innerText = "المجموع: " + total.toLocaleString() + " دينار";
     }
 
     function remove(i) { cart.splice(i, 1); showCart(); document.getElementById('count').innerText = cart.length; }
@@ -93,62 +102,74 @@
         const addr = document.getElementById('addr').value;
         const btn = document.getElementById('sendBtn');
 
-        if(!name || !phone || cart.length === 0) { alert("أكمل البيانات أولاً"); return; }
+        if(!name || !phone || cart.length === 0) { alert("أكمل البيانات والمنتجات أولاً"); return; }
 
         btn.innerText = "جاري الإرسال...";
         btn.disabled = true;
 
-        const orderID = Math.floor(1000 + Math.random() * 9000); // رقم طلب رباعي عشوائي
+        const orderID = Math.floor(1000 + Math.random() * 9000);
         const orderText = cart.map(i => i.name).join(", ");
-        
+        const finalPrice = document.getElementById('total').innerText;
+
         const params = {
             to_name: "التاجر",
             from_name: name,
             phone: phone,
             address: addr,
-            message: `طلب جديد رقم #${orderID} | المنتجات: ${orderText} | المجموع: ${document.getElementById('total').innerText}`
+            message: `طلب رقم #${orderID} | المنتجات: ${orderText} | ${finalPrice}`
         };
 
         emailjs.send('service_ga7ytjo', 'template_lgvpsns', params)
             .then(() => {
-                // إظهار واجهة النجاح مع زر الإلغاء
-                document.getElementById('cart-inner-content').innerHTML = `
-                    <div style="padding:40px 10px;">
-                        <h2 style="color:var(--green);">تم إرسال طلبك بنجاح! ✅</h2>
-                        <p>رقم الطلب الخاص بك: <strong style="font-size:1.5rem;">#${orderID}</strong></p>
-                        <p>الاسم: ${name}</p>
-                        <hr>
-                        <p style="color:#666;">إذا أخطأت في الطلب، يمكنك إلغاؤه الآن قبل التجهيز:</p>
-                        <button class="cancel-btn" onclick="cancelOrder(${orderID}, '${name}')">❌ إلغاء هذا الطلب الآن</button>
+                // حفظ الطلب في ذاكرة المتصفح
+                saveToHistory(orderID, orderText, finalPrice);
+
+                document.getElementById('cart-content-area').innerHTML = `
+                    <div style="padding:20px; text-align:center;">
+                        <h2 style="color:var(--green);">تم الإرسال بنجاح! ✅</h2>
+                        <p>رقم طلبك: <strong>#${orderID}</strong></p>
+                        <p>تم حفظ الطلب في صفحة "طلباتي السابقة"</p>
+                        <button class="confirm-btn" onclick="location.reload()" style="background:var(--main);">العودة للمتجر</button>
                         <br><br>
-                        <button class="close-cart" onclick="location.reload()">العودة للمتجر</button>
+                        <button onclick="cancelOrder(${orderID}, '${name}')" style="color:var(--red); border:none; background:none; cursor:pointer; text-decoration:underline;">إلغاء الطلب الآن ❌</button>
                     </div>
                 `;
                 cart = [];
                 document.getElementById('count').innerText = "0";
-            }, (err) => { 
-                alert("حدث خطأ، تأكد من الإنترنت");
-                btn.innerText = "إتمام الشراء";
-                btn.disabled = false;
-            });
+            }, (err) => { alert("فشل الإرسال"); btn.disabled = false; btn.innerText = "إعادة المحاولة"; });
+    }
+
+    function saveToHistory(id, items, price) {
+        let history = JSON.parse(localStorage.getItem('myOrders')) || [];
+        history.push({ id, date: new Date().toLocaleDateString('ar-EG'), items, price });
+        localStorage.setItem('myOrders', JSON.stringify(history));
+    }
+
+    function showHistory() {
+        document.getElementById('history-view').style.display = 'block';
+        let history = JSON.parse(localStorage.getItem('myOrders')) || [];
+        let html = history.length === 0 ? '<p>لا توجد طلبات سابقة في هذا المتصفح</p>' : '';
+        
+        history.reverse().forEach(order => {
+            html += `
+                <div class="order-card">
+                    <p><strong>رقم الطلب:</strong> #${order.id} <span style="float:left; font-size:0.8rem; color:#888;">${order.date}</span></p>
+                    <p><strong>المنتجات:</strong> ${order.items}</p>
+                    <p><strong>المجموع:</strong> ${order.price}</p>
+                    <button onclick="cancelOrder(${order.id}, 'عميل سابق')" style="color:var(--red); border:none; background:none; padding:0; cursor:pointer; font-size:0.9rem;">طلب إلغاء ❌</button>
+                </div>
+            `;
+        });
+        document.getElementById('history-list').innerHTML = html;
     }
 
     function cancelOrder(id, customerName) {
-        if(!confirm("هل أنت متأكد من رغبتك في إلغاء الطلب رقم #" + id + "؟")) return;
-
-        const cancelParams = {
-            to_name: "التاجر",
-            from_name: customerName,
-            phone: "إلغاء طلب",
-            address: "من واجهة الإلغاء",
-            message: `⚠️ طلب إلغاء عاجل! الزبون يرغب في إلغاء الطلب رقم #${id}`
+        if(!confirm("إرسال طلب إلغاء للرقم #" + id + "؟")) return;
+        const params = {
+            to_name: "التاجر", from_name: customerName, phone: "إلغاء", address: "من السجل",
+            message: `⚠️ طلب إلغاء عاجل للطلب رقم #${id}`
         };
-
-        emailjs.send('service_ga7ytjo', 'template_lgvpsns', cancelParams)
-            .then(() => {
-                alert("تم إرسال طلب الإلغاء للتاجر. سيتم تجاهل طلبك السابق.");
-                location.reload();
-            });
+        emailjs.send('service_ga7ytjo', 'template_lgvpsns', params).then(() => alert("تم إرسال طلب الإلغاء للتاجر"));
     }
 </script>
 </body>
