@@ -1,38 +1,39 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر النخبة - منتجاتك المفضلة</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f4f4f4; }
-        header { background: #232f3e; color: white; padding: 20px; text-align: center; }
-        .hero { background: white; padding: 50px 20px; text-align: center; border-bottom: 2px solid #ddd; }
-        .product-card { background: white; margin: 20px; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
-        .price { color: #b12704; font-size: 24px; font-weight: bold; }
-        .buy-btn { background: #ffd814; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-        .buy-btn:hover { background: #f7ca00; }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>متجر النخبة العراقي</h1>
-    </header>
+<div class="order-container" style="text-align: center; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+    <h3>إكمال عملية الشراء</h3>
+    <input type="text" id="customerName" placeholder="الاسم الكامل" style="width: 80%; padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px;">
+    <input type="text" id="customerAddress" placeholder="العنوان بالتفصيل" style="width: 80%; padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px;">
+    <input type="tel" id="customerPhone" placeholder="رقم الهاتف" style="width: 80%; padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px;">
+    
+    <button onclick="sendToMerchant()" style="background-color: #25d366; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px;">
+        تم - إرسال الطلب للتاجر
+    </button>
+</div>
 
-    <div class="hero">
-        <h2>أحدث صيحات التكنولوجيا في مكان واحد</h2>
-        <p>جودة عالية - توصيل سريع لكل محافظات العراق</p>
-    </div>
+<script>
+function sendToMerchant() {
+    // 1. جمع المعلومات من الخانات
+    const name = document.getElementById('customerName').value;
+    const address = document.getElementById('customerAddress').value;
+    const phone = document.getElementById('customerPhone').value;
+    const productName = "ساعة Ultra Smart"; // اسم المنتج
 
-    <div class="product-card">
-        <img src="https://via.placeholder.com/150" alt="منتج">
-        <h3>ساعة ذكية Ultra G9</h3>
-        <p class="price">25,000 دينار</p>
-        <button class="buy-btn" onclick="alert('سيتم توجيهك لطلب المنتج عبر الواتساب')">اطلب الآن عبر واتساب</button>
-    </div>
+    // 2. التأكد أن الزبون ملأ المعلومات
+    if (name === "" || address === "" || phone === "") {
+        alert("يرجى ملء كافة المعلومات لإتمام الطلب");
+        return;
+    }
 
-    <footer style="text-align: center; padding: 20px; color: #888;">
-        © 2026 جميع الحقوق محفوظة لمتجر النخبة
-    </footer>
-</body>
-</html>
+    // 3. تنسيق الرسالة التي ستصل للتاجر
+    const message = `طلب جديد من الموقع!%0A%0A` +
+                    `*المنتج:* ${productName}%0A` +
+                    `*اسم الزبون:* ${name}%0A` +
+                    `*العنوان:* ${address}%0A` +
+                    `*رقم الهاتف:* ${phone}`;
+
+    // 4. رقم هاتف التاجر (ضع رقمك هنا بدلاً من 964000000000)
+    const merchantNumber = "9647738271157";
+
+    // 5. فتح الواتساب وإرسال البيانات
+    window.location.href = `https://wa.me/${merchantNumber}?text=${message}`;
+}
+</script>
