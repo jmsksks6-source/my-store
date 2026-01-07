@@ -3,29 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر النخبة الذكي</title>
+    <title>متجر النخبة - نظام الطلبات المتطور</title>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
-        :root { --main: #2c3e50; --gold: #d4af37; --green: #27ae60; }
+        :root { --main: #2c3e50; --gold: #d4af37; --green: #27ae60; --red: #e74c3c; }
         body { font-family: sans-serif; margin: 0; background: #f4f7f6; text-align: center; }
-        header { background: var(--main); color: white; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        header { background: var(--main); color: white; padding: 20px; }
         .product-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 20px; }
         .card { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .card img { width: 100%; border-radius: 10px; height: 180px; object-fit: cover; }
-        .price { color: #e74c3c; font-size: 1.2rem; font-weight: bold; margin: 10px 0; }
+        .price { color: var(--red); font-size: 1.2rem; font-weight: bold; margin: 10px 0; }
         .add-btn { background: var(--gold); border: none; padding: 10px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .cart-btn { position: fixed; bottom: 20px; right: 20px; background: var(--green); color: white; padding: 15px 25px; border-radius: 30px; cursor: pointer; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         #cart-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 200; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         .close-cart { background: #eee; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
         input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
         .confirm-btn { background: var(--green); color: white; border: none; padding: 15px; width: 90%; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
+        .cancel-btn { background: var(--red); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <header>
     <h1>متجر النخبة العراقي 🇮🇶</h1>
-    <p>نظام الطلبات التلقائي المطور</p>
+    <p>تسوق بأمان - إمكانية إلغاء الطلب متوفرة</p>
 </header>
 
 <div class="product-list">
@@ -46,20 +47,22 @@
 <div class="cart-btn" onclick="showCart()">فتح السلة (<span id="count">0</span>)</div>
 
 <div id="cart-view">
-    <button class="close-cart" onclick="hideCart()">رجوع للمتجر ←</button>
-    <h2>سلة التسوق الخاصة بك</h2>
-    <div id="items"></div>
-    <h3 id="total">المجموع: 0 دينار</h3>
-    <hr>
-    <h3>معلومات التوصيل</h3>
-    <input type="text" id="name" placeholder="الاسم الكامل">
-    <input type="text" id="addr" placeholder="المحافظة والمنطقة">
-    <input type="tel" id="phone" placeholder="رقم الموبايل">
-    <button class="confirm-btn" id="sendBtn" onclick="sendOrder()">تأكيد الشراء وإرسال الطلب</button>
+    <div id="cart-inner-content">
+        <button class="close-cart" onclick="hideCart()">رجوع للمتجر ←</button>
+        <h2>سلة التسوق</h2>
+        <div id="items"></div>
+        <h3 id="total">المجموع: 0 دينار</h3>
+        <hr>
+        <h3>معلومات التوصيل</h3>
+        <input type="text" id="name" placeholder="الاسم الكامل">
+        <input type="text" id="addr" placeholder="العنوان (محافظة - منطقة)">
+        <input type="tel" id="phone" placeholder="رقم الموبايل">
+        <button class="confirm-btn" id="sendBtn" onclick="sendOrder()">إتمام الشراء وإرسال الطلب</button>
+    </div>
 </div>
 
 <script>
-    // إعدادات الربط المباشر من صورك
+    // تهيئة البيانات من صورك السابقة
     emailjs.init("YXDPYRNxazZ45eYWS"); 
 
     let cart = [];
@@ -95,6 +98,7 @@
         btn.innerText = "جاري الإرسال...";
         btn.disabled = true;
 
+        const orderID = Math.floor(1000 + Math.random() * 9000); // رقم طلب رباعي عشوائي
         const orderText = cart.map(i => i.name).join(", ");
         
         const params = {
@@ -102,21 +106,48 @@
             from_name: name,
             phone: phone,
             address: addr,
-            message: "المنتجات: " + orderText + " | المجموع: " + document.getElementById('total').innerText
+            message: `طلب جديد رقم #${orderID} | المنتجات: ${orderText} | المجموع: ${document.getElementById('total').innerText}`
         };
 
         emailjs.send('service_ga7ytjo', 'template_lgvpsns', params)
             .then(() => {
-                alert("تم إرسال طلبك بنجاح! ستصلك رسالة تأكيد قريباً.");
+                // إظهار واجهة النجاح مع زر الإلغاء
+                document.getElementById('cart-inner-content').innerHTML = `
+                    <div style="padding:40px 10px;">
+                        <h2 style="color:var(--green);">تم إرسال طلبك بنجاح! ✅</h2>
+                        <p>رقم الطلب الخاص بك: <strong style="font-size:1.5rem;">#${orderID}</strong></p>
+                        <p>الاسم: ${name}</p>
+                        <hr>
+                        <p style="color:#666;">إذا أخطأت في الطلب، يمكنك إلغاؤه الآن قبل التجهيز:</p>
+                        <button class="cancel-btn" onclick="cancelOrder(${orderID}, '${name}')">❌ إلغاء هذا الطلب الآن</button>
+                        <br><br>
+                        <button class="close-cart" onclick="location.reload()">العودة للمتجر</button>
+                    </div>
+                `;
                 cart = [];
                 document.getElementById('count').innerText = "0";
-                hideCart();
-                btn.innerText = "تأكيد الشراء وإرسال الطلب";
-                btn.disabled = false;
             }, (err) => { 
-                alert("فشل الإرسال، تأكد من اتصال الإنترنت");
-                btn.innerText = "تأكيد الشراء وإرسال الطلب";
+                alert("حدث خطأ، تأكد من الإنترنت");
+                btn.innerText = "إتمام الشراء";
                 btn.disabled = false;
+            });
+    }
+
+    function cancelOrder(id, customerName) {
+        if(!confirm("هل أنت متأكد من رغبتك في إلغاء الطلب رقم #" + id + "؟")) return;
+
+        const cancelParams = {
+            to_name: "التاجر",
+            from_name: customerName,
+            phone: "إلغاء طلب",
+            address: "من واجهة الإلغاء",
+            message: `⚠️ طلب إلغاء عاجل! الزبون يرغب في إلغاء الطلب رقم #${id}`
+        };
+
+        emailjs.send('service_ga7ytjo', 'template_lgvpsns', cancelParams)
+            .then(() => {
+                alert("تم إرسال طلب الإلغاء للتاجر. سيتم تجاهل طلبك السابق.");
+                location.reload();
             });
     }
 </script>
