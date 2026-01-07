@@ -1,39 +1,124 @@
-<div class="order-container" style="text-align: center; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-    <h3>إكمال عملية الشراء</h3>
-    <input type="text" id="customerName" placeholder="الاسم الكامل" style="width: 80%; padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px;">
-    <input type="text" id="customerAddress" placeholder="العنوان بالتفصيل" style="width: 80%; padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px;">
-    <input type="tel" id="customerPhone" placeholder="رقم الهاتف" style="width: 80%; padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px;">
-    
-    <button onclick="sendToMerchant()" style="background-color: #25d366; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px;">
-        تم - إرسال الطلب للتاجر
-    </button>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر النخبة الذكي</title>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        :root { --main: #2c3e50; --gold: #d4af37; --green: #27ae60; }
+        body { font-family: sans-serif; margin: 0; background: #f4f7f6; text-align: center; }
+        header { background: var(--main); color: white; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .product-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 20px; }
+        .card { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .card img { width: 100%; border-radius: 10px; height: 180px; object-fit: cover; }
+        .price { color: #e74c3c; font-size: 1.2rem; font-weight: bold; margin: 10px 0; }
+        .add-btn { background: var(--gold); border: none; padding: 10px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .cart-btn { position: fixed; bottom: 20px; right: 20px; background: var(--green); color: white; padding: 15px 25px; border-radius: 30px; cursor: pointer; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        #cart-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 200; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .close-cart { background: #eee; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .confirm-btn { background: var(--green); color: white; border: none; padding: 15px; width: 90%; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>متجر النخبة العراقي 🇮🇶</h1>
+    <p>نظام الطلبات التلقائي المطور</p>
+</header>
+
+<div class="product-list">
+    <div class="card">
+        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400" alt="ساعة">
+        <h3>ساعة Ultra G9 الذكية</h3>
+        <p class="price">25,000 دينار</p>
+        <button class="add-btn" onclick="addToCart('ساعة Ultra G9', 25000)">إضافة للسلة 🛒</button>
+    </div>
+    <div class="card">
+        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400" alt="سماعة">
+        <h3>سماعة لاسلكية M10</h3>
+        <p class="price">15,000 دينار</p>
+        <button class="add-btn" onclick="addToCart('سماعة لاسلكية M10', 15000)">إضافة للسلة 🛒</button>
+    </div>
+</div>
+
+<div class="cart-btn" onclick="showCart()">فتح السلة (<span id="count">0</span>)</div>
+
+<div id="cart-view">
+    <button class="close-cart" onclick="hideCart()">رجوع للمتجر ←</button>
+    <h2>سلة التسوق الخاصة بك</h2>
+    <div id="items"></div>
+    <h3 id="total">المجموع: 0 دينار</h3>
+    <hr>
+    <h3>معلومات التوصيل</h3>
+    <input type="text" id="name" placeholder="الاسم الكامل">
+    <input type="text" id="addr" placeholder="المحافظة والمنطقة">
+    <input type="tel" id="phone" placeholder="رقم الموبايل">
+    <button class="confirm-btn" id="sendBtn" onclick="sendOrder()">تأكيد الشراء وإرسال الطلب</button>
 </div>
 
 <script>
-function sendToMerchant() {
-    // 1. جمع المعلومات من الخانات
-    const name = document.getElementById('customerName').value;
-    const address = document.getElementById('customerAddress').value;
-    const phone = document.getElementById('customerPhone').value;
-    const productName = "ساعة Ultra Smart"; // اسم المنتج
+    // إعدادات الربط المباشر من صورك
+    emailjs.init("YXDPYRNxazZ45eYWS"); 
 
-    // 2. التأكد أن الزبون ملأ المعلومات
-    if (name === "" || address === "" || phone === "") {
-        alert("يرجى ملء كافة المعلومات لإتمام الطلب");
-        return;
+    let cart = [];
+    function addToCart(n, p) {
+        cart.push({name: n, price: p});
+        document.getElementById('count').innerText = cart.length;
+        alert("تمت إضافة " + n + " للسلة");
     }
 
-    // 3. تنسيق الرسالة التي ستصل للتاجر
-    const message = `طلب جديد من الموقع!%0A%0A` +
-                    `*المنتج:* ${productName}%0A` +
-                    `*اسم الزبون:* ${name}%0A` +
-                    `*العنوان:* ${address}%0A` +
-                    `*رقم الهاتف:* ${phone}`;
+    function showCart() {
+        document.getElementById('cart-view').style.display = 'block';
+        let html = '';
+        let total = 0;
+        cart.forEach((item, index) => {
+            html += `<p>${item.name} - ${item.price} د.ع <button onclick="remove(${index})">حذف</button></p>`;
+            total += item.price;
+        });
+        document.getElementById('items').innerHTML = html;
+        document.getElementById('total').innerText = "المجموع: " + total + " دينار";
+    }
 
-    // 4. رقم هاتف التاجر (ضع رقمك هنا بدلاً من 964000000000)
-    const merchantNumber = "9647738271157";
+    function remove(i) { cart.splice(i, 1); showCart(); document.getElementById('count').innerText = cart.length; }
+    function hideCart() { document.getElementById('cart-view').style.display = 'none'; }
 
-    // 5. فتح الواتساب وإرسال البيانات
-    window.location.href = `https://wa.me/${merchantNumber}?text=${message}`;
-}
+    function sendOrder() {
+        const name = document.getElementById('name').value;
+        const phone = document.getElementById('phone').value;
+        const addr = document.getElementById('addr').value;
+        const btn = document.getElementById('sendBtn');
+
+        if(!name || !phone || cart.length === 0) { alert("أكمل البيانات أولاً"); return; }
+
+        btn.innerText = "جاري الإرسال...";
+        btn.disabled = true;
+
+        const orderText = cart.map(i => i.name).join(", ");
+        
+        const params = {
+            to_name: "التاجر",
+            from_name: name,
+            phone: phone,
+            address: addr,
+            message: "المنتجات: " + orderText + " | المجموع: " + document.getElementById('total').innerText
+        };
+
+        emailjs.send('service_ga7ytjo', 'template_lgvpsns', params)
+            .then(() => {
+                alert("تم إرسال طلبك بنجاح! ستصلك رسالة تأكيد قريباً.");
+                cart = [];
+                document.getElementById('count').innerText = "0";
+                hideCart();
+                btn.innerText = "تأكيد الشراء وإرسال الطلب";
+                btn.disabled = false;
+            }, (err) => { 
+                alert("فشل الإرسال، تأكد من اتصال الإنترنت");
+                btn.innerText = "تأكيد الشراء وإرسال الطلب";
+                btn.disabled = false;
+            });
+    }
 </script>
+</body>
+</html>
