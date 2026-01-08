@@ -3,33 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام النخبة برو</title>
+    <title>نظام النخبة الشامل v4</title>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         :root { --main: #2c3e50; --gold: #d4af37; --green: #27ae60; --red: #e74c3c; --bg: #f4f7f6; }
-        body { font-family: sans-serif; margin: 0; background: var(--bg); text-align: center; }
-        header { background: var(--main); color: white; padding: 25px; position: relative; }
-        .tabs { display: flex; justify-content: center; background: #fff; padding: 10px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .tab-btn { padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: bold; color: #555; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); text-align: center; color: #333; }
+        header { background: var(--main); color: white; padding: 20px; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        .tabs { display: flex; justify-content: center; background: #fff; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-x: auto; position: sticky; top: 60px; z-index: 900; }
+        .tab-btn { padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: bold; color: #555; white-space: nowrap; }
         .tab-btn.active { color: var(--gold); border-bottom: 3px solid var(--gold); }
-        .product-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; padding: 15px; }
-        .card { background: white; border-radius: 12px; padding: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
-        .card img { width: 100%; border-radius: 8px; height: 160px; object-fit: cover; }
-        .out-of-stock-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; border-radius: 12px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 300; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; }
-        #cart-view, #admin-view, #history-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 400; overflow-y: auto; padding: 20px; box-sizing: border-box; }
-        .cart-btn { position: fixed; bottom: 20px; right: 20px; background: var(--green); color: white; padding: 15px 25px; border-radius: 30px; cursor: pointer; z-index: 100; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .product-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; padding: 15px; }
+        .card { background: white; border-radius: 12px; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
+        .card img { width: 100%; border-radius: 8px; height: 140px; object-fit: cover; }
+        .out-of-stock-tag { position: absolute; top: 15px; right: -30px; background: var(--red); color: white; padding: 5px 30px; transform: rotate(45deg); font-size: 0.7rem; font-weight: bold; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; text-align: right; max-height: 85vh; overflow-y: auto; }
+        #cart-view, #admin-view, #history-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1500; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
         .btn-main { background: var(--gold); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .qty-btn { background: #eee; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .qty-controls { display: flex; align-items: center; gap: 10px; background: #f9f9f9; padding: 5px; border-radius: 8px; margin: 5px 0; justify-content: center; }
+        .qty-btn { background: #ddd; border: none; width: 30px; height: 30px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <header>
-    <button onclick="showHistory()" style="position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.2); color:white; border:none; padding:8px 12px; border-radius:5px;">📋 طلباتي</button>
-    <h1>متجر النخبة برو</h1>
+    <button onclick="showHistory()" style="background:none; border:1px solid white; color:white; padding:5px 10px; border-radius:5px; cursor:pointer;">📦 طلباتي</button>
+    <h2 style="margin:0; font-size: 1.2rem;">متجر النخبة برو</h2>
+    <div onclick="showCart()" style="cursor:pointer; font-weight:bold;">🛒 <span id="cartCount">0</span></div>
 </header>
 
 <div class="tabs">
@@ -43,198 +44,228 @@
 
 <div id="optionsModal" class="modal">
     <div class="modal-content">
-        <h3 id="optTitle"></h3>
-        <div id="variantSelectors"></div>
-        <button class="btn-main" style="margin-top:15px;" onclick="confirmAddToCart()">إضافة للسلة 🛒</button>
-        <button onclick="closeModal()" style="margin-top:10px; border:none; background:none; color:gray;">إلغاء</button>
+        <h3 id="optTitle" style="margin:0 0 15px 0; color:var(--main);"></h3>
+        <label>اللون المتوفر:</label>
+        <select id="selCol">
+            <option>أسود ملكي</option><option>أبيض ناصع</option><option>فضي معدني</option><option>ذهبي</option>
+        </select>
+        <div id="sizeArea">
+            <label>القياس:</label>
+            <select id="selSize">
+                <option>M</option><option>L</option><option>XL</option><option>XXL</option>
+            </select>
+        </div>
+        <label>ملاحظات إضافية:</label>
+        <textarea id="optNote" rows="2" placeholder="مثلاً: أريد الاتصال قبل التوصيل..."></textarea>
+        <button class="btn-main" onclick="confirmAddToCart()">إضافة إلى السلة 🛒</button>
+        <button onclick="closeModal()" style="width:100%; background:none; border:none; color:gray; margin-top:10px; cursor:pointer;">إلغاء</button>
     </div>
 </div>
 
-<div class="cart-btn" onclick="showCart()">🛒 السلة (<span id="cartCount">0</span>)</div>
-
 <div id="cart-view">
-    <button onclick="hideCart()" style="width:100%; padding:10px; margin-bottom:15px;">← عودة</button>
-    <h2>سلة المشتريات</h2>
-    <div id="cartItems"></div>
-    <h3 id="totalPrice"></h3>
-    <hr>
-    <input type="text" id="custName" placeholder="الاسم">
-    <select id="province"><option value="بغداد">بغداد</option><option value="البصرة">البصرة</option><option value="نينوى">نينوى</option><option value="ميسان">ميسان</option><option value="ذي قار">ذي قار</option></select>
-    <input type="text" id="area" placeholder="المنطقة">
-    <input type="tel" id="custPhone" placeholder="الموبايل">
-    <button class="btn-main" style="background:var(--green)" onclick="sendOrder()">إرسال الطلب</button>
+    <button onclick="hideCart()" style="float:left; background:#eee; border:none; padding:10px; border-radius:5px;">إغلاق X</button>
+    <h2 style="text-align:right;">سلة المشتريات</h2>
+    <div id="cartItems" style="text-align:right;"></div>
+    
+    <div style="background:#fff7e6; padding:15px; border-radius:10px; margin:15px 0; border:1px dashed var(--gold); text-align:right;">
+        <label>كود الخصم (Promo Code):</label>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="coupon" placeholder="أدخل الكود" style="margin:0;">
+            <button style="padding:0 15px; border-radius:8px; border:none; background:var(--main); color:white;">تطبيق</button>
+        </div>
+    </div>
+
+    <div style="text-align:right; background:#f0f2f1; padding:15px; border-radius:10px;">
+        <p>سعر المنتجات: <span id="subTotal">0</span> د.ع</p>
+        <p>أجور التوصيل: 5,000 د.ع</p>
+        <h3 id="totalPrice" style="color:var(--green); margin:0;">المجموع الكلي: 0 د.ع</h3>
+    </div>
+
+    <h3 style="text-align:right; margin-top:20px;">معلومات التوصيل</h3>
+    <input type="text" id="custName" placeholder="الاسم الكامل">
+    <select id="province">
+        <option value="">-- اختر المحافظة --</option>
+        <option>بغداد</option><option>البصرة</option><option>نينوى</option><option>أربيل</option><option>النجف</option>
+        <option>كربلاء</option><option>ذي قار</option><option>بابل</option><option>الأنبار</option><option>ميسان</option>
+        <option>القادسية</option><option>ديالى</option><option>واسط</option><option>صلاح الدين</option><option>كركوك</option>
+        <option>السليمانية</option><option>دهوك</option><option>المثنى</option>
+    </select>
+    <input type="text" id="area" placeholder="المنطقة / العنوان">
+    <input type="tel" id="custPhone" placeholder="رقم الهاتف">
+    <button class="btn-main" style="background:var(--green); height:60px; font-size:1.4rem; margin-top:15px;" id="sendBtn" onclick="sendOrder()">تأكيد الطلب وإرسال 📤</button>
 </div>
 
 <div id="history-view">
-    <button onclick="document.getElementById('history-view').style.display='none'" style="width:100%; padding:10px; margin-bottom:15px;">إغلاق</button>
-    <h2>📦 طلباتي السابقة</h2>
+    <button onclick="document.getElementById('history-view').style.display='none'" style="width:100%; padding:10px;">إغلاق</button>
+    <h2>📦 سجل طلباتي</h2>
     <div id="historyItems"></div>
 </div>
 
 <div id="admin-view">
-    <button onclick="document.getElementById('admin-view').style.display='none'">إغلاق</button>
-    <h3>إضافة منتج</h3>
+    <button onclick="document.getElementById('admin-view').style.display='none'">خروج</button>
+    <h3>إضافة منتج للسوق</h3>
     <input type="text" id="pName" placeholder="اسم المنتج">
-    <input type="number" id="pPrice" placeholder="السعر">
+    <input type="number" id="pPrice" placeholder="السعر بالدينار">
     <input type="text" id="pImg" placeholder="رابط الصورة">
-    <select id="pCat"><option value="ساعات">ساعات</option><option value="سماعات">سماعات</option><option value="ملابس">ملابس</option></select>
-    <input type="text" id="pColors" placeholder="الألوان (مثال: أحمر,أزرق)">
-    <input type="text" id="pSizes" placeholder="القياسات (مثال: M,L,XL)">
-    <button class="btn-main" onclick="adminAddProduct()">حفظ</button>
+    <select id="pCat"><option>ساعات</option><option>سماعات</option><option>ملابس</option></select>
+    <button class="btn-main" onclick="adminAdd()">إضافة المنتج</button>
     <hr>
     <div id="adminList"></div>
 </div>
 
-<footer style="padding:20px; color:#ccc;" onclick="openAdmin()">© 2026 جميع الحقوق محفوظة</footer>
+<footer style="padding:40px; color:#bbb; cursor:pointer;" onclick="openAdmin()">© 2026 جميع الحقوق محفوظة - لوحة التحكم</footer>
 
 <script>
     emailjs.init("YXDPYRNxazZ45eYWS");
-    let products = JSON.parse(localStorage.getItem('v3_products')) || [];
-    let cart = JSON.parse(localStorage.getItem('v3_cart')) || [];
-    let selectedP = null;
 
-    function renderProducts() {
+    const defaultItems = [
+        {id:1, name:"ساعة Ultra G9", price:25000, cat:"ساعات", img:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400", stock:true},
+        {id:2, name:"سماعة M10", price:15000, cat:"سماعات", img:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400", stock:true},
+        {id:3, name:"تيشيرت صيفي", price:12000, cat:"ملابس", img:"https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400", stock:true},
+        {id:4, name:"ساعة T800", price:18000, cat:"ساعات", img:"https://images.unsplash.com/photo-1544117518-2b46abc89a69?w=400", stock:true},
+        {id:5, name:"سماعة Pro 6", price:20000, cat:"سماعات", img:"https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400", stock:true},
+        {id:6, name:"قميص رسمي", price:22000, cat:"ملابس", img:"https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400", stock:true},
+        {id:7, name:"ساعة كلاسيك", price:35000, cat:"ساعات", img:"https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400", stock:true},
+        {id:8, name:"سماعة بلوتوث", price:13000, cat:"سماعات", img:"https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400", stock:true},
+        {id:9, name:"بنطلون جينز", price:25000, cat:"ملابس", img:"https://images.unsplash.com/photo-1542272604-787c3835535d?w=400", stock:true},
+        {id:10, name:"جاكيت خفيف", price:45000, cat:"ملابس", img:"https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400", stock:true}
+    ];
+
+    let products = JSON.parse(localStorage.getItem('db_products')) || defaultItems;
+    let cart = [];
+    let activeP = null;
+
+    function render() {
         const list = document.getElementById('productList');
-        const adminList = document.getElementById('adminList');
-        list.innerHTML = ''; adminList.innerHTML = '';
+        const adm = document.getElementById('adminList');
+        list.innerHTML = ''; adm.innerHTML = '';
         
         products.forEach(p => {
             list.innerHTML += `
                 <div class="card" data-cat="${p.cat}">
-                    ${!p.stock ? '<div class="out-of-stock-overlay"><b>نفاذ الكمية</b></div>' : ''}
+                    ${!p.stock ? '<div class="out-of-stock-tag">نفاذ</div>' : ''}
                     <img src="${p.img}">
-                    <h3>${p.name}</h3>
-                    <p>${p.price.toLocaleString()} د.ع</p>
-                    <button class="btn-main" onclick="openOptions(${p.id})" ${!p.stock?'disabled':''}>اطلب الآن</button>
+                    <h4>${p.name}</h4>
+                    <p style="color:var(--red); font-weight:bold;">${p.price.toLocaleString()} د.ع</p>
+                    <button class="btn-main" style="padding:8px;" onclick="openOpt(${p.id})" ${!p.stock?'disabled':''}>اطلب الآن</button>
                 </div>`;
-            adminList.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
+            adm.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
                 <span>${p.name}</span>
                 <div>
                     <button onclick="toggleStock(${p.id})">${p.stock?'متوفر':'نفاذ'}</button>
-                    <button style="color:red" onclick="deleteProduct(${p.id})">حذف</button>
+                    <button style="color:red" onclick="delP(${p.id})">حذف</button>
                 </div>
             </div>`;
         });
-        document.getElementById('cartCount').innerText = cart.reduce((a,b)=>a+b.qty, 0);
+        document.getElementById('cartCount').innerText = cart.length;
     }
 
-    function openOptions(id) {
-        selectedP = products.find(p => p.id === id);
-        document.getElementById('optTitle').innerText = selectedP.name;
-        let html = '';
-        if(selectedP.colors) {
-            html += '<label>اللون:</label><select id="selCol">' + selectedP.colors.split(',').map(c=>`<option>${c}</option>`).join('') + '</select>';
-        }
-        if(selectedP.sizes) {
-            html += '<label>القياس:</label><select id="selSize">' + selectedP.sizes.split(',').map(s=>`<option>${s}</option>`).join('') + '</select>';
-        }
-        document.getElementById('variantSelectors').innerHTML = html;
+    function openOpt(id) {
+        activeP = products.find(p => p.id === id);
+        document.getElementById('optTitle').innerText = activeP.name;
+        document.getElementById('sizeArea').style.display = (activeP.cat === 'ملابس') ? 'block' : 'none';
+        document.getElementById('optNote').value = '';
         document.getElementById('optionsModal').style.display = 'flex';
     }
 
     function confirmAddToCart() {
-        const color = document.getElementById('selCol') ? document.getElementById('selCol').value : '';
-        const size = document.getElementById('selSize') ? document.getElementById('selSize').value : '';
-        const itemIdx = cart.findIndex(i => i.id === selectedP.id && i.color === color && i.size === size);
-        
-        if(itemIdx > -1) cart[itemIdx].qty += 1;
-        else cart.push({...selectedP, color, size, qty: 1});
-        
-        localStorage.setItem('v3_cart', JSON.stringify(cart));
-        renderProducts(); closeModal();
+        const col = document.getElementById('selCol').value;
+        const siz = (activeP.cat === 'ملابس') ? document.getElementById('selSize').value : '-';
+        const note = document.getElementById('optNote').value;
+        cart.push({...activeP, col, siz, note, qty:1});
+        document.getElementById('optionsModal').style.display = 'none';
+        render();
     }
 
     function showCart() {
         document.getElementById('cart-view').style.display = 'block';
-        let html = ''; let total = 0;
+        let html = ''; let sub = 0;
         cart.forEach((item, idx) => {
             html += `<div style="text-align:right; border-bottom:1px solid #eee; padding:10px;">
-                <b>${item.name}</b> <small>(${item.color} ${item.size})</small><br>
-                ${item.price.toLocaleString()} د.ع x ${item.qty}
-                <div style="margin-top:5px;">
+                <b>${item.name}</b> <small>(${item.col} / ${item.siz})</small>
+                <div style="font-size:0.8rem; color:gray;">ملاحظة: ${item.note || 'لا يوجد'}</div>
+                <div class="qty-controls">
                     <button class="qty-btn" onclick="updateQty(${idx}, 1)">+</button>
+                    <span style="width:30px; text-align:center;">${item.qty}</span>
                     <button class="qty-btn" onclick="updateQty(${idx}, -1)">-</button>
-                    <button class="qty-btn" style="color:red; float:left;" onclick="updateQty(${idx}, -999)">حذف</button>
+                    <span onclick="updateQty(${idx}, -99)" style="color:red; margin-right:auto; cursor:pointer;">حذف 🗑️</span>
                 </div>
+                <div>السعر: ${(item.price * item.qty).toLocaleString()} د.ع</div>
             </div>`;
-            total += (item.price * item.qty);
+            sub += (item.price * item.qty);
         });
-        document.getElementById('cartItems').innerHTML = html;
-        document.getElementById('totalPrice').innerText = "المجموع مع التوصيل (5,000): " + (total + 5000).toLocaleString() + " د.ع";
+        document.getElementById('subTotal').innerText = sub.toLocaleString();
+        document.getElementById('totalPrice').innerText = "المجموع الكلي: " + (sub + 5000).toLocaleString() + " د.ع";
+        document.getElementById('cartItems').innerHTML = html || '<p>السلة فارغة</p>';
     }
 
     function updateQty(idx, val) {
         cart[idx].qty += val;
         if(cart[idx].qty <= 0) cart.splice(idx, 1);
-        localStorage.setItem('v3_cart', JSON.stringify(cart));
-        showCart(); renderProducts();
+        showCart(); render();
     }
 
     function sendOrder() {
-        const name = document.getElementById('custName').value;
-        if(!name || cart.length === 0) return alert("أكمل البيانات");
-        
-        const details = cart.map(i => `${i.name} [${i.color}-${i.size}] x${i.qty}`).join("\n");
+        const n = document.getElementById('custName').value;
+        const p = document.getElementById('custPhone').value;
+        const pr = document.getElementById('province').value;
+        if(!n || !p || !pr || cart.length === 0) return alert("يرجى إكمال البيانات");
+
+        const btn = document.getElementById('sendBtn');
+        btn.disabled = true; btn.innerText = "جاري الإرسال...";
+
+        const itemsTxt = cart.map(i => `${i.name} [لون:${i.col}, قياس:${i.siz}, كمية:${i.qty}, ملاحظة:${i.note}]`).join("\n");
+        const total = document.getElementById('totalPrice').innerText;
+
         const params = {
-            to_name: "التاجر", from_name: name, phone: document.getElementById('custPhone').value,
-            address: `${document.getElementById('province').value} - ${document.getElementById('area').value}`,
-            message: `الطلب:\n${details}\n${document.getElementById('totalPrice').innerText}`
+            to_name: "التاجر", from_name: n, phone: p,
+            address: `${pr} - ${document.getElementById('area').value}`,
+            message: `طلب جديد:\n${itemsTxt}\n${total}`
         };
 
         emailjs.send('service_ga7ytjo', 'template_lgvpsns', params).then(() => {
-            let history = JSON.parse(localStorage.getItem('v3_history')) || [];
-            history.push({id: Date.now(), details, total: document.getElementById('totalPrice').innerText, date: new Date().toLocaleDateString()});
-            localStorage.setItem('v3_history', JSON.stringify(history));
-            alert("تم الإرسال!"); cart = []; localStorage.removeItem('v3_cart'); location.reload();
+            let hist = JSON.parse(localStorage.getItem('final_hist')) || [];
+            hist.push({date: new Date().toLocaleString(), details: itemsTxt, total: total});
+            localStorage.setItem('final_hist', JSON.stringify(hist));
+            alert("تم إرسال طلبك بنجاح!");
+            cart = []; location.reload();
         });
     }
 
     function showHistory() {
         document.getElementById('history-view').style.display = 'block';
-        let history = JSON.parse(localStorage.getItem('v3_history')) || [];
-        document.getElementById('historyItems').innerHTML = history.reverse().map(h => `
-            <div style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:10px; text-align:right;">
-                <p><b>التاريخ:</b> ${h.date}</p>
-                <p style="white-space:pre-line;">${h.details}</p>
-                <p><b>المبلغ:</b> ${h.total}</p>
+        let hist = JSON.parse(localStorage.getItem('final_hist')) || [];
+        document.getElementById('historyItems').innerHTML = hist.reverse().map(h => `
+            <div style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:10px; text-align:right; font-size:0.85rem;">
+                <b>التاريخ:</b> ${h.date}<br>
+                <b>التفاصيل:</b><br>${h.details.replace(/\n/g, '<br>')}<br>
+                <b>المبلغ:</b> ${h.total}
             </div>`).join('');
     }
 
-    function adminAddProduct() {
-        const p = {
-            id: Date.now(),
-            name: document.getElementById('pName').value,
-            price: parseInt(document.getElementById('pPrice').value),
-            img: document.getElementById('pImg').value || 'https://via.placeholder.com/150',
-            cat: document.getElementById('pCat').value,
-            colors: document.getElementById('pColors').value,
-            sizes: document.getElementById('pSizes').value,
-            stock: true
-        };
-        products.push(p); localStorage.setItem('v3_products', JSON.stringify(products));
-        renderProducts();
+    // وظائف التاجر
+    function openAdmin() { if(prompt("كلمة المرور:") === '1234') document.getElementById('admin-view').style.display='block'; }
+    function adminAdd() {
+        const n = document.getElementById('pName').value;
+        const p = document.getElementById('pPrice').value;
+        const i = document.getElementById('pImg').value;
+        const c = document.getElementById('pCat').value;
+        if(!n || !p) return;
+        products.push({id: Date.now(), name: n, price: parseInt(p), img: i || 'https://via.placeholder.com/150', cat: c, stock: true});
+        localStorage.setItem('db_products', JSON.stringify(products)); render();
     }
-
-    function toggleStock(id) {
-        products = products.map(p => p.id === id ? {...p, stock: !p.stock} : p);
-        localStorage.setItem('v3_products', JSON.stringify(products)); renderProducts();
-    }
-
-    function deleteProduct(id) {
-        products = products.filter(p => p.id !== id);
-        localStorage.setItem('v3_products', JSON.stringify(products)); renderProducts();
-    }
-
-    function openAdmin() { if(prompt("الباسورد؟")==='1234') document.getElementById('admin-view').style.display='block'; }
-    function closeModal() { document.getElementById('optionsModal').style.display='none'; }
-    function hideCart() { document.getElementById('cart-view').style.display='none'; }
+    function toggleStock(id) { products = products.map(p => p.id === id ? {...p, stock: !p.stock} : p); localStorage.setItem('db_products', JSON.stringify(products)); render(); }
+    function delP(id) { products = products.filter(p => p.id !== id); localStorage.setItem('db_products', JSON.stringify(products)); render(); }
+    
+    function closeModal() { document.getElementById('optionsModal').style.display = 'none'; }
+    function hideCart() { document.getElementById('cart-view').style.display = 'none'; }
     function filterProducts(c, b) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         b.classList.add('active');
         document.querySelectorAll('.card').forEach(card => card.style.display = (c === 'all' || card.dataset.cat === c) ? 'block' : 'none');
     }
 
-    renderProducts();
+    render();
 </script>
 </body>
 </html>
