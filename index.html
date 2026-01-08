@@ -3,153 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر النخبة برو</title>
+    <title>متجر النخبة برو - الإصدار الشامل</title>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
-        :root { --main: #2c3e50; --gold: #d4af37; --red: #e74c3c; --bg: #f4f7f6; }
-        body { font-family: sans-serif; margin: 0; background: var(--bg); direction: rtl; }
-        header { background: var(--main); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .product-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; padding: 15px; }
-        .card { background: white; border-radius: 12px; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
-        .card img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; }
-        #cart-view, #history-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1500; overflow-y: auto; padding: 20px; box-sizing: border-box; }
-        .btn-main { background: var(--gold); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .cancel-btn { background: var(--red); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 15px; width: 100%; font-weight: bold; }
-        .history-card { border: 2px solid #eee; padding: 15px; margin-bottom: 15px; border-radius: 12px; background: #fff; text-align: right; position: relative; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
+        :root { --main: #2c3e50; --gold: #d4af37; --green: #27ae60; --red: #e74c3c; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg); direction: rtl; }
+        header { background: var(--main); color: white; padding: 15px; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .tabs { display: flex; justify-content: center; gap: 8px; background: white; padding: 12px; sticky; top: 60px; z-index: 999; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-x: auto; }
+        .tab-btn { padding: 8px 18px; border: 1px solid #ddd; border-radius: 20px; background: white; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .tab-btn.active { background: var(--gold); color: white; border-color: var(--gold); }
+        .product-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 15px; padding: 15px; }
+        .card { background: white; border-radius: 15px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; text-align: center; }
+        .card img { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; }
+        .badge-out { position: absolute; top: 10px; right: 10px; background: var(--red); color: white; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 380px; padding: 25px; border-radius: 20px; text-align: right; }
+        #cart-view, #admin-view, #history-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1500; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 0.95rem; }
+        .btn-main { background: var(--gold); color: white; border: none; padding: 14px; width: 100%; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
     </style>
 </head>
 <body>
 
 <header>
-    <button onclick="showHistory()" style="background:var(--gold); border:none; color:white; padding:8px 15px; border-radius:8px; cursor:pointer;">📦 طلباتي</button>
-    <h2 style="margin:0; font-size: 1.2rem;">متجر النخبة</h2>
+    <button onclick="showHistory()" style="background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:8px 12px; border-radius:8px; cursor:pointer;">📦 طلباتي</button>
+    <h3 style="margin:0;">متجر النخبة</h3>
     <div onclick="showCart()" style="cursor:pointer; font-size:1.3rem;">🛒 <span id="cartCount">0</span></div>
 </header>
 
+<div class="tabs" id="categoryTabs">
+    <button class="tab-btn active" onclick="filterCat('الكل', this)">الكل</button>
+    <button class="tab-btn" onclick="filterCat('ساعات', this)">ساعات</button>
+    <button class="tab-btn" onclick="filterCat('سماعات', this)">سماعات</button>
+    <button class="tab-btn" onclick="filterCat('ملابس', this)">ملابس</button>
+</div>
+
 <div class="product-list" id="productList"></div>
 
+<div id="optionModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalPName">اسم المنتج</h3>
+        <label>اللون:</label>
+        <select id="selColor"><option>أسود</option><option>أبيض</option><option>ذهبي</option><option>فضي</option></select>
+        <div id="sizeSection">
+            <label>القياس:</label>
+            <select id="selSize"><option>M</option><option>L</option><option>XL</option><option>XXL</option></select>
+        </div>
+        <button class="btn-main" onclick="pushToCart()">إضافة للسلة 🛒</button>
+        <button onclick="closeModal()" style="width:100%; background:none; border:none; margin-top:10px; color:gray;">إغلاق</button>
+    </div>
+</div>
+
 <div id="cart-view">
-    <button onclick="document.getElementById('cart-view').style.display='none'" style="float:left;">إغلاق X</button>
-    <h2 style="text-align:right;">سلة المشتريات</h2>
+    <button onclick="hideCart()" style="float:left; border:none; background:#eee; padding:8px; border-radius:8px;">إغلاق</button>
+    <h2>🛒 سلة المشتريات</h2>
     <div id="cartItems"></div>
-    <hr>
+    <div style="background:#fff9e6; padding:15px; border-radius:12px; margin:15px 0; border:1px dashed var(--gold);">
+        <label>كود الخصم (Promo Code):</label>
+        <div style="display:flex; gap:8px;"><input type="text" id="promoCode" style="margin:0;"><button style="background:var(--main); color:white; border:none; padding:0 15px; border-radius:8px;">تطبيق</button></div>
+    </div>
     <input type="text" id="custName" placeholder="الاسم الكامل">
-    <select id="province">
-        <option value="">اختر المحافظة</option>
+    <select id="custProvince">
+        <option value="">-- اختر المحافظة --</option>
         <option>بغداد</option><option>البصرة</option><option>نينوى</option><option>أربيل</option><option>النجف</option>
         <option>كربلاء</option><option>ذي قار</option><option>بابل</option><option>الأنبار</option><option>ميسان</option>
         <option>القادسية</option><option>ديالى</option><option>واسط</option><option>صلاح الدين</option><option>كركوك</option>
         <option>السليمانية</option><option>دهوك</option><option>المثنى</option>
     </select>
+    <input type="text" id="custArea" placeholder="المنطقة / الحي">
+    <input type="text" id="custPoint" placeholder="أقرب نقطة دالة">
     <input type="tel" id="custPhone" placeholder="رقم الهاتف">
-    <button class="btn-main" style="background:#27ae60;" onclick="sendOrder()">تأكيد وإرسال الطلب ✅</button>
+    <button class="btn-main" style="background:var(--green); font-size:1.2rem;" onclick="checkout()">تأكيد الطلب نهائياً ✅</button>
+</div>
+
+<div id="admin-view">
+    <button onclick="document.getElementById('admin-view').style.display='none'">خروج</button>
+    <h3>إدارة المنتجات</h3>
+    <input type="text" id="newPName" placeholder="الاسم">
+    <input type="number" id="newPPrice" placeholder="السعر">
+    <input type="text" id="newPImg" placeholder="رابط الصورة">
+    <select id="newPCat"><option>ساعات</option><option>سماعات</option><option>ملابس</option></select>
+    <button class="btn-main" onclick="adminAddP()">إضافة المنتج</button>
+    <hr>
+    <div id="adminProductList"></div>
 </div>
 
 <div id="history-view">
-    <button onclick="document.getElementById('history-view').style.display='none'" style="width:100%; padding:10px; margin-bottom:20px;">العودة للمتجر</button>
-    <h2 style="text-align:right;">سجل طلباتك</h2>
+    <button onclick="document.getElementById('history-view').style.display='none'" style="width:100%; padding:10px;">رجوع</button>
+    <h2>📦 سجل طلباتي</h2>
     <div id="historyItems"></div>
 </div>
+
+<footer onclick="openAdminPortal()" style="padding:40px; text-align:center; color:#ccc; font-size:12px; cursor:default;">
+    © 2026 متجر النخبة برو - جميع الحقوق محفوظة
+</footer>
 
 <script>
     emailjs.init("YXDPYRNxazZ45eYWS");
 
-    let products = [
-        {id:1, name:"ساعة الترا G9", price:25000, img:"https://images.unsplash.com/photo-1544117518-2b46abc89a69?w=400"},
-        {id:2, name:"سماعة M10 الأصلية", price:15000, img:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400"},
-        {id:3, name:"تيشيرت صيفي", price:12000, img:"https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400"}
+    let inventory = JSON.parse(localStorage.getItem('store_db_v1')) || [
+        {id:1, name:"ساعة الترا G9", price:25000, cat:"ساعات", img:"https://images.unsplash.com/photo-1544117518-2b46abc89a69?w=400", stock:true},
+        {id:2, name:"سماعة M10", price:15000, cat:"سماعات", img:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400", stock:true},
+        {id:3, name:"تيشيرت صيفي", price:12000, cat:"ملابس", img:"https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400", stock:true}
     ];
+
     let cart = [];
+    let currentSelect = null;
 
-    function render() {
+    function renderStore(data = inventory) {
         const list = document.getElementById('productList');
-        list.innerHTML = products.map(p => `
-            <div class="card">
-                <img src="${p.img}">
-                <h4>${p.name}</h4>
-                <p style="color:var(--red); font-weight:bold;">${p.price.toLocaleString()} د.ع</p>
-                <button class="btn-main" onclick="addToCart(${p.id})">أضف للسلة 🛒</button>
-            </div>
-        `).join('');
-    }
+        const admList = document.getElementById('adminProductList');
+        list.innerHTML = ''; admList.innerHTML = '';
 
-    function addToCart(id) {
-        let p = products.find(x => x.id === id);
-        cart.push({...p, cartId: Date.now()});
+        data.forEach(p => {
+            list.innerHTML += `
+                <div class="card">
+                    ${!p.stock ? '<div class="badge-out">نافذ</div>' : ''}
+                    <img src="${p.img}">
+                    <h4>${p.name}</h4>
+                    <p style="color:var(--red); font-weight:bold;">${p.price.toLocaleString()} د.ع</p>
+                    <button class="btn-main" onclick="openOptions(${p.id})" ${!p.stock ? 'disabled' : ''}>اطلب الآن</button>
+                </div>`;
+            
+            admList.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding:10px;">
+                    <span>${p.name}</span>
+                    <div>
+                        <button onclick="toggleStock(${p.id})">${p.stock ? 'متوفر' : 'نافذ'}</button>
+                        <button onclick="deleteP(${p.id})" style="color:red">حذف</button>
+                    </div>
+                </div>`;
+        });
         document.getElementById('cartCount').innerText = cart.length;
-        alert("تمت الإضافة!");
     }
 
-    function showCart() {
-        document.getElementById('cart-view').style.display = 'block';
-        document.getElementById('cartItems').innerHTML = cart.map((item, idx) => `
-            <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
-                <span>${item.name}</span>
-                <button onclick="removeItem(${idx})" style="color:red; border:none; background:none; cursor:pointer;">حذف</button>
-            </div>
-        `).join('');
+    function openOptions(id) {
+        currentSelect = inventory.find(p => p.id === id);
+        document.getElementById('modalPName').innerText = currentSelect.name;
+        document.getElementById('sizeSection').style.display = (currentSelect.cat === 'ملابس') ? 'block' : 'none';
+        document.getElementById('optionModal').style.display = 'flex';
     }
 
-    function removeItem(idx) { cart.splice(idx, 1); document.getElementById('cartCount').innerText = cart.length; showCart(); }
+    function pushToCart() {
+        cart.push({
+            ...currentSelect,
+            color: document.getElementById('selColor').value,
+            size: (currentSelect.cat === 'ملابس' ? document.getElementById('selSize').value : 'N/A'),
+            cartId: Date.now()
+        });
+        closeModal(); renderStore(); alert("تمت الإضافة للسلة ✅");
+    }
 
-    function sendOrder() {
-        const n = document.getElementById('custName').value;
-        const p = document.getElementById('custPhone').value;
-        const pr = document.getElementById('province').value;
-        if(!n || !p || !pr || cart.length === 0) return alert("أكمل المعلومات");
+    function filterCat(cat, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderStore(cat === 'الكل' ? inventory : inventory.filter(p => p.cat === cat));
+    }
 
-        const oID = "#" + Math.floor(1000 + Math.random() * 9000);
-        const details = cart.map(i => i.name).join(" + ");
+    function checkout() {
+        const name = document.getElementById('custName').value;
+        const phone = document.getElementById('custPhone').value;
+        const area = document.getElementById('custArea').value;
+        if(!name || !phone || !area || cart.length === 0) return alert("يرجى إكمال جميع الحقول");
+
+        const orderID = "#" + Math.floor(1000 + Math.random() * 9000);
+        const details = cart.map(i => `${i.name} (لون:${i.color}/قياس:${i.size})`).join(" + ");
 
         emailjs.send('service_ga7ytjo', 'template_lgvpsns', {
-            to_name: "التاجر", from_name: n, phone: p, address: pr,
-            message: `طلب جديد رقم ${oID}: ${details}`
+            to_name: "التاجر", from_name: name, phone: phone, 
+            address: `${document.getElementById('custProvince').value} - ${area} - دالة: ${document.getElementById('custPoint').value}`,
+            message: `طلب جديد رقم ${orderID}: ${details}`
         }).then(() => {
-            let hist = JSON.parse(localStorage.getItem('user_orders_v5')) || [];
-            hist.push({id: oID, name: n, details: details, date: new Date().toLocaleString()});
-            localStorage.setItem('user_orders_v5', JSON.stringify(hist));
-            alert("تم إرسال الطلب بنجاح!");
+            let history = JSON.parse(localStorage.getItem('store_history_v1')) || [];
+            history.push({id: orderID, name, details, date: new Date().toLocaleString()});
+            localStorage.setItem('store_history_v1', JSON.stringify(history));
+            alert("تم إرسال طلبك بنجاح! رقم الطلب: " + orderID);
             cart = []; location.reload();
         });
     }
 
     function showHistory() {
         document.getElementById('history-view').style.display = 'block';
-        let hist = JSON.parse(localStorage.getItem('user_orders_v5')) || [];
-        const container = document.getElementById('historyItems');
-        
-        if(hist.length === 0) {
-            container.innerHTML = "<p style='text-align:center;'>لا توجد طلبات سابقة</p>";
-            return;
-        }
-
-        container.innerHTML = hist.reverse().map(h => `
-            <div class="history-card">
+        let history = JSON.parse(localStorage.getItem('store_history_v1')) || [];
+        document.getElementById('historyItems').innerHTML = history.reverse().map(h => `
+            <div style="border:1px solid #ddd; padding:15px; margin-bottom:12px; border-radius:12px; text-align:right; background:#fff;">
                 <p><b>رقم الطلب:</b> ${h.id}</p>
                 <p><b>التفاصيل:</b> ${h.details}</p>
                 <p><b>التاريخ:</b> ${h.date}</p>
-                <button class="cancel-btn" onclick="cancelOrder('${h.id}', '${h.name}', '${h.details}')">إلغاء الطلب ❌</button>
-            </div>
-        `).join('');
+                <button class="btn-main" style="background:var(--red); padding:8px;" onclick="cancelOrder('${h.id}','${h.name}','${h.details}')">إلغاء الطلب ❌</button>
+            </div>`).join('');
     }
 
     function cancelOrder(id, name, details) {
-        if(!confirm("هل تريد إلغاء الطلب " + id + "؟ سيتم إرسال تنبيه للتاجر.")) return;
-
+        if(!confirm("هل أنت متأكد من إلغاء الطلب؟ سيتم إخطار التاجر.")) return;
         emailjs.send('service_ga7ytjo', 'template_lgvpsns', {
             to_name: "التاجر", from_name: name, phone: "طلب إلغاء",
-            message: `⚠️ قام الزبون بإلغاء الطلب رقم ${id}. التفاصيل: ${details}`
+            message: `⚠️ إلغاء طلب: رقم ${id} - التفاصيل: ${details}`
         }).then(() => {
-            let hist = JSON.parse(localStorage.getItem('user_orders_v5')) || [];
-            hist = hist.filter(x => x.id !== id);
-            localStorage.setItem('user_orders_v5', JSON.stringify(hist));
-            alert("تم الإلغاء وحذف الطلب من سجلك.");
+            let history = JSON.parse(localStorage.getItem('store_history_v1')) || [];
+            history = history.filter(x => x.id !== id);
+            localStorage.setItem('store_history_v1', JSON.stringify(history));
+            alert("تم إرسال طلب الإلغاء وحذف الطلب من سجلك.");
             showHistory();
         });
     }
 
-    render();
+    function openAdminPortal() { if(prompt("كلمة مرور التاجر:") === "1234") document.getElementById('admin-view').style.display='block'; }
+    function adminAddP() {
+        inventory.push({id: Date.now(), name: document.getElementById('newPName').value, price: parseInt(document.getElementById('newPPrice').value), img: document.getElementById('newPImg').value, cat: document.getElementById('newPCat').value, stock: true});
+        localStorage.setItem('store_db_v1', JSON.stringify(inventory)); renderStore();
+    }
+    function toggleStock(id) { inventory = inventory.map(p => p.id === id ? {...p, stock: !p.stock} : p); localStorage.setItem('store_db_v1', JSON.stringify(inventory)); renderStore(); }
+    function deleteP(id) { inventory = inventory.filter(p => p.id !== id); localStorage.setItem('store_db_v1', JSON.stringify(inventory)); renderStore(); }
+    function showCart() { document.getElementById('cart-view').style.display = 'block'; }
+    function hideCart() { document.getElementById('cart-view').style.display = 'none'; }
+    function closeModal() { document.getElementById('optionModal').style.display = 'none'; }
+    renderStore();
 </script>
 </body>
 </html>
