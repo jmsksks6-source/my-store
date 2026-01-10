@@ -4,54 +4,42 @@
     <meta charset="UTF-8">
     <title>Elite Store Pro | المنصة المتكاملة</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    
     <style>
-        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --light: #f8f9fa; --dark: #121212; }
+        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --light: #f8f9fa; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--light); color: #333; }
-        
         .screen { display: none; padding: 15px; }
         .active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         header { background: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top:0; z-index:100; }
-        .cart-icon { position: relative; cursor: pointer; font-size: 24px; }
-        .badge { position: absolute; top: -5px; right: -10px; background: var(--danger); color: white; font-size: 11px; padding: 2px 6px; border-radius: 50%; }
-
+        .badge { background: var(--danger); color: white; font-size: 11px; padding: 2px 6px; border-radius: 50%; position: absolute; top: -5px; right: -10px; }
         .cats-wrapper { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
-        .cat-card { background: white; padding: 8px 15px; border-radius: 20px; border: 1px solid #ddd; cursor: pointer; white-space: nowrap; font-size: 14px; }
-        .cat-card.active-cat { background: var(--primary); color: white; border-color: var(--primary); }
-
+        .cat-card { background: white; padding: 8px 15px; border-radius: 20px; border: 1px solid #ddd; cursor: pointer; white-space: nowrap; }
+        .cat-card.active-cat { background: var(--primary); color: white; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
-        .product { background: white; border-radius: 15px; padding: 12px; border: 1px solid #eee; transition: 0.3s; position: relative; text-align: center; }
-        .product img { width: 100%; height: 160px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; }
-        .out-of-stock { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; font-weight: bold; color: red; border-radius: 15px; z-index: 2; }
-
+        .product { background: white; border-radius: 15px; padding: 12px; border: 1px solid #eee; text-align: center; position: relative; }
+        .product img { width: 100%; height: 160px; object-fit: cover; border-radius: 10px; }
+        .out-of-stock-tag { position: absolute; top: 10px; right: 10px; background: red; color: white; padding: 2px 8px; border-radius: 5px; font-size: 12px; z-index: 5; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-content { background: white; width: 90%; max-width: 450px; padding: 20px; border-radius: 20px; max-height: 85vh; overflow-y: auto; }
-        
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         .btn { border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; margin-top: 8px; }
         .btn-p { background: var(--primary); color: white; }
         .btn-s { background: var(--success); color: white; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
-        
-        .cart-item { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
-        .qty-box { display: flex; align-items: center; gap: 8px; }
-        .qty-btn { width: 28px; height: 28px; border-radius: 5px; border: 1px solid #ccc; background: white; }
+        .btn-d { background: var(--danger); color: white; }
+        .order-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; border-right: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
 <div id="auth-screen" class="screen active">
-    <div style="text-align: center; margin-top: 50px;">
-        <h1 style="color:var(--primary); letter-spacing: 2px;">ELITE STORE</h1>
-        <div style="width: 85%; max-width: 350px; margin: auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <p style="color:#666;">مرحباً بك في متجرنا</p>
-            <input type="text" id="user-name" placeholder="اسمك الكامل">
+    <div style="text-align: center; margin-top: 100px;">
+        <h1 style="color:var(--primary)">ELITE STORE</h1>
+        <div style="max-width:320px; margin:auto; background:white; padding:30px; border-radius:20px;">
+            <input type="text" id="user-name" placeholder="الاسم">
             <input type="password" id="user-pass" placeholder="كلمة السر">
-            <button class="btn btn-p" onclick="register()">دخول المتجر</button>
+            <button class="btn btn-p" onclick="register()">دخول</button>
+            <p style="font-size: 12px; color: gray;">(admin/admin) للدخول كتاجر</p>
         </div>
     </div>
 </div>
@@ -61,8 +49,8 @@
         <b onclick="showScreen('home')" style="cursor:pointer; font-size: 20px;">ELITE</b>
         <div style="display:flex; gap:18px; align-items:center;">
             <span onclick="showScreen('orders')" style="cursor:pointer; font-size: 18px;">📋</span>
-            <div class="cart-icon" onclick="openCart()">🛒 <span class="badge" id="cart-count">0</span></div>
-            <span id="admin-tag" onclick="showScreen('admin')" style="display:none; color:var(--primary); cursor:pointer; font-weight:bold;">⚙️</span>
+            <div style="position:relative; cursor:pointer;" onclick="openCart()">🛒 <span class="badge" id="cart-count">0</span></div>
+            <span id="admin-tag" onclick="showScreen('admin')" style="display:none; color:var(--primary); cursor:pointer; font-weight:bold;">⚙️ التاجر</span>
         </div>
     </header>
 
@@ -73,41 +61,42 @@
             <div class="cat-card" onclick="filterBy('ملابس', event)">ملابس</div>
             <div class="cat-card" onclick="filterBy('أحذية', event)">أحذية</div>
             <div class="cat-card" onclick="filterBy('عطور', event)">عطور</div>
+            <div class="cat-card" onclick="filterBy('إكسسوارات', event)">إكسسوارات</div>
         </div>
         <div class="grid" id="products-grid"></div>
     </div>
 
     <div id="orders-screen" class="screen">
         <h3>طلباتي</h3>
-        <p style="font-size: 12px; color: #666;">يمكنك إلغاء الطلب خلال ساعتين فقط من وقت الطلب.</p>
         <div id="my-orders-list"></div>
     </div>
 
     <div id="admin-screen" class="screen">
         <div style="background:white; padding:15px; border-radius:15px; border:1px solid #ddd;">
-            <h4>إضافة منتج</h4>
+            <h4>إضافة/تعديل منتج</h4>
             <input type="text" id="adm-title" placeholder="اسم المنتج">
-            <input type="number" id="adm-price" placeholder="السعر (مثال: 25000)">
+            <input type="number" id="adm-price" placeholder="السعر">
             <input type="text" id="adm-img" placeholder="رابط الصورة">
-            <input type="text" id="adm-colors" placeholder="الألوان (فصل بفاصلة)">
-            <input type="text" id="adm-sizes" placeholder="القياسات (فصل بفاصلة)">
-            <button class="btn btn-p" onclick="adminAddProduct()">نشر المنتج</button>
+            <select id="adm-cat">
+                <option>ساعات</option><option>ملابس</option><option>أحذية</option><option>عطور</option><option>إكسسوارات</option>
+            </select>
+            <input type="text" id="adm-colors" placeholder="الألوان (مثال: أسود,أحمر)">
+            <input type="text" id="adm-sizes" placeholder="القياسات (مثال: M,L,XL)">
+            <button class="btn btn-p" onclick="adminSaveProduct()">حفظ المنتج</button>
         </div>
-        <div id="admin-data" style="margin-top: 20px;"></div>
+        <hr>
+        <h4>إدارة المنتجات</h4>
+        <div id="admin-list"></div>
     </div>
 </div>
 
-<div id="product-options-modal" class="modal">
+<div id="opt-modal" class="modal">
     <div class="modal-content">
         <h3 id="opt-title"></h3>
-        <label>اللون:</label>
-        <select id="opt-color"></select>
-        <div id="size-area">
-            <label>القياس:</label>
-            <select id="opt-size"></select>
-        </div>
-        <button class="btn btn-p" onclick="confirmAddToCart()">إضافة للسلة 🛒</button>
-        <button class="btn" style="background:none" onclick="closeModals()">إلغاء</button>
+        <label>اللون:</label><select id="opt-color"></select>
+        <div id="size-area"><label>القياس:</label><select id="opt-size"></select></div>
+        <button class="btn btn-p" onclick="confirmAddToCart()">أضف للسلة</button>
+        <button class="btn" onclick="closeModals()">إلغاء</button>
     </div>
 </div>
 
@@ -115,14 +104,10 @@
     <div class="modal-content">
         <h3>🛒 السلة</h3>
         <div id="cart-items"></div>
-        <div style="background:#f9f9f9; padding:15px; border-radius:10px; margin-top:15px;">
-            <div style="display:flex; justify-content: space-between;"><span>المنتجات:</span> <span id="sub-total">0</span> د.ع</div>
-            <div style="display:flex; justify-content: space-between;"><span>التوصيل:</span> <span>5,000 د.ع</span></div>
-            <hr>
-            <div style="display:flex; justify-content: space-between; font-weight:bold; color:var(--success);"><span>الإجمالي:</span> <span id="main-total">0</span> د.ع</div>
-        </div>
-        <button class="btn btn-p" onclick="openCheckout()">التالي: عنوان التوصيل</button>
-        <button class="btn" style="background:none" onclick="closeModals()">إغلاق</button>
+        <hr>
+        <div id="total-price-div"></div>
+        <button class="btn btn-p" onclick="openCheckout()">إتمام الطلب</button>
+        <button class="btn" onclick="closeModals()">إغلاق</button>
     </div>
 </div>
 
@@ -130,41 +115,57 @@
     <div class="modal-content">
         <h3>بيانات التوصيل</h3>
         <input type="text" id="f-phone" placeholder="رقم الهاتف">
-        <select id="f-city">
-            <option value="">اختر المحافظة...</option>
-            <option>بغداد</option><option>البصرة</option><option>نينوى</option><option>أربيل</option><option>النجف</option>
-            <option>كربلاء</option><option>ذي قار</option><option>كركوك</option><option>الأنبار</option><option>بابل</option>
-            <option>ديالى</option><option>ميسان</option><option>الديوانية</option><option>صلاح الدين</option><option>دهوك</option>
-            <option>السليمانية</option><option>واسط</option><option>المثنى</option>
+        <select id="f-city"><option value="">المحافظة...</option><option>بغداد</option><option>البصرة</option><option>نينوى</option><option>أربيل</option><option>النجف</option><option>كربلاء</option><option>ذي قار</option><option>كركوك</option><option>الأنبار</option><option>بابل</option><option>ديالى</option><option>ميسان</option><option>الديوانية</option><option>صلاح الدين</option><option>دهوك</option><option>السليمانية</option><option>واسط</option><option>المثنى</option></select>
+        <input type="text" id="f-addr" placeholder="العنوان">
+        <label>طريقة الدفع:</label>
+        <select id="f-pay" onchange="document.getElementById('e-pay-info').style.display = this.value=='e'?'block':'none'">
+            <option value="c">دفع عند الاستلام</option>
+            <option value="e">دفع إلكتروني (زين كاش / آسيا)</option>
         </select>
-        <input type="text" id="f-area" placeholder="المنطقة / العنوان">
-        <textarea id="f-note" placeholder="أي ملاحظات إضافية؟"></textarea>
-        
-        <button class="btn btn-s" id="final-btn" onclick="finishOrder()">إرسال الطلب عبر الجيميل ✅</button>
-        <button class="btn" style="background:none" onclick="closeModals()">تراجع</button>
+        <div id="e-pay-info" style="display:none; background:#fff3cd; padding:10px; border-radius:10px; font-size:12px;">
+            حول المبلغ لـ: 07800000000 ثم أرسل الطلب
+        </div>
+        <button class="btn btn-s" id="final-btn" onclick="finishOrder()">تأكيد وإرسال ✅</button>
+        <button class="btn" onclick="closeModals()">تراجع</button>
     </div>
 </div>
 
 <script>
-    // الإعدادات الرسمية من صورك
     emailjs.init("YXDPYRNxazZ45eYWS");
 
+    // قاعدة بيانات محسنة بـ 15 منتج منوع
+    let defaultProducts = [
+        {id:1, title:"ساعة Ultra 2", price:35000, cat:"ساعات", img:"https://picsum.photos/id/175/400/400", status:"a", colors:"فضي,أسود", sizes:""},
+        {id:2, title:"تيشيرت صيفي", price:15000, cat:"ملابس", img:"https://picsum.photos/id/2/400/400", status:"a", colors:"أبيض,أزرق", sizes:"M,L,XL"},
+        {id:3, title:"حذاء سبورت N", price:45000, cat:"أحذية", img:"https://picsum.photos/id/103/400/400", status:"a", colors:"أسود,رصاصي", sizes:"40,41,42,43"},
+        {id:4, title:"عطر ديور سوفاج", price:65000, cat:"عطور", img:"https://picsum.photos/id/11/400/400", status:"a", colors:"أزرق داكن", sizes:""},
+        {id:5, title:"سماعة بلوتوث Pro", price:25000, cat:"إكسسوارات", img:"https://picsum.photos/id/12/400/400", status:"a", colors:"أبيض,أسود", sizes:""},
+        {id:6, title:"نظارة شمسية Ray-Ban", price:20000, cat:"إكسسوارات", img:"https://picsum.photos/id/13/400/400", status:"a", colors:"أسود,بني", sizes:""},
+        {id:7, title:"قميص رسمي", price:25000, cat:"ملابس", img:"https://picsum.photos/id/14/400/400", status:"a", colors:"أبيض,كحلي", sizes:"L,XL"},
+        {id:8, title:"ساعة رولكس كلاسيك", price:120000, cat:"ساعات", img:"https://picsum.photos/id/15/400/400", status:"a", colors:"ذهبي,فضي", sizes:""},
+        {id:9, title:"حذاء كلاسيك جلد", price:55000, cat:"أحذية", img:"https://picsum.photos/id/16/400/400", status:"a", colors:"بني,أسود", sizes:"41,42,43"},
+        {id:10, title:"عطر شانيل", price:75000, cat:"عطور", img:"https://picsum.photos/id/17/400/400", status:"a", colors:"شفاف", sizes:""},
+        {id:11, title:"خاتم فضة 925", price:30000, cat:"إكسسوارات", img:"https://picsum.photos/id/18/400/400", status:"a", colors:"فضي", sizes:"7,8,9"},
+        {id:12, title:"بنطلون جينز", price:22000, cat:"ملابس", img:"https://picsum.photos/id/19/400/400", status:"a", colors:"أزرق,أسود", sizes:"30,32,34"},
+        {id:13, title:"ساعة ذكية G-Shock", price:40000, cat:"ساعات", img:"https://picsum.photos/id/20/400/400", status:"a", colors:"أسود,أخضر", sizes:""},
+        {id:14, title:"عطر بلو شانيل", price:80000, cat:"عطور", img:"https://picsum.photos/id/21/400/400", status:"a", colors:"أزرق", sizes:""},
+        {id:15, title:"كاب سبورت", price:10000, cat:"إكسسوارات", img:"https://picsum.photos/id/22/400/400", status:"a", colors:"أحمر,أسود", sizes:""}
+    ];
+
     let db = {
-        user: JSON.parse(localStorage.getItem('user_elite')) || null,
-        products: JSON.parse(localStorage.getItem('products_elite')) || [
-            {id:1, title:"ساعة Ultra G9", price:35000, cat:"ساعات", img:"https://images.unsplash.com/photo-1544117518-2b46abc89a69?w=400", status:"a", colors:"فضي,أسود", sizes:""},
-            {id:2, title:"تيشيرت هودي", price:25000, cat:"ملابس", img:"https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400", status:"a", colors:"رصاصي,أبيض", sizes:"M,L,XL"}
-        ],
-        orders: JSON.parse(localStorage.getItem('orders_elite')) || []
+        user: JSON.parse(localStorage.getItem('elite_user')),
+        products: JSON.parse(localStorage.getItem('elite_prods')) || defaultProducts,
+        orders: JSON.parse(localStorage.getItem('elite_orders')) || []
     };
     let cart = [];
-    let tempProduct = null;
+    let tempProd = null;
 
     function register() {
-        const name = document.getElementById('user-name').value;
-        if(!name) return alert("ادخل اسمك");
-        db.user = { name: name, role: name.toLowerCase() === 'admin' ? 'admin' : 'user' };
-        localStorage.setItem('user_elite', JSON.stringify(db.user));
+        const n = document.getElementById('user-name').value;
+        const p = document.getElementById('user-pass').value;
+        if(!n) return alert("ادخل الاسم");
+        db.user = { name: n, role: (n === 'admin' && p === 'admin') ? 'admin' : 'user' };
+        localStorage.setItem('elite_user', JSON.stringify(db.user));
         initApp();
     }
 
@@ -182,11 +183,11 @@
         db.products.filter(p => filter === 'الكل' || p.cat === filter).forEach(p => {
             grid.innerHTML += `
                 <div class="product">
-                    ${p.status !== 'a' ? '<div class="out-of-stock">نافذ</div>' : ''}
+                    ${p.status !== 'a' ? '<div class="out-of-stock-tag">نافذ</div>' : ''}
                     <img src="${p.img}">
-                    <div style="font-weight:bold; height:40px; overflow:hidden;">${p.title}</div>
-                    <div style="color:var(--danger); font-weight:bold; margin:5px 0;">${p.price.toLocaleString()} د.ع</div>
-                    <button class="btn btn-p" onclick="openOptions(${p.id})">طلب الآن</button>
+                    <div style="font-weight:bold; margin-top:5px;">${p.title}</div>
+                    <div style="color:red; font-weight:bold;">${p.price.toLocaleString()} د.ع</div>
+                    <button class="btn btn-p" onclick="openOptions(${p.id})">اطلب الآن</button>
                 </div>`;
         });
     }
@@ -198,35 +199,22 @@
     }
 
     function openOptions(id) {
-        tempProduct = db.products.find(p => p.id === id);
-        if(tempProduct.status !== 'a') return alert("هذا المنتج غير متوفر حالياً");
-        document.getElementById('product-options-modal').style.display = 'flex';
-        document.getElementById('opt-title').innerText = tempProduct.title;
-        document.getElementById('opt-color').innerHTML = tempProduct.colors.split(',').map(c => `<option>${c.trim()}</option>`).join('');
-        
-        const sizeArea = document.getElementById('size-area');
-        if(tempProduct.sizes) {
-            sizeArea.style.display = 'block';
-            document.getElementById('opt-size').innerHTML = tempProduct.sizes.split(',').map(s => `<option>${s.trim()}</option>`).join('');
-        } else {
-            sizeArea.style.display = 'none';
-        }
+        tempProd = db.products.find(p => p.id === id);
+        if(tempProd.status !== 'a') return alert("هذا المنتج نافذ حالياً");
+        document.getElementById('opt-modal').style.display = 'flex';
+        document.getElementById('opt-title').innerText = tempProd.title;
+        document.getElementById('opt-color').innerHTML = tempProd.colors.split(',').map(c => `<option>${c}</option>`).join('');
+        const sa = document.getElementById('size-area');
+        if(tempProd.sizes) {
+            sa.style.display = 'block';
+            document.getElementById('opt-size').innerHTML = tempProd.sizes.split(',').map(s => `<option>${s}</option>`).join('');
+        } else { sa.style.display = 'none'; }
     }
 
     function confirmAddToCart() {
-        cart.push({
-            ...tempProduct,
-            choiceColor: document.getElementById('opt-color').value,
-            choiceSize: document.getElementById('opt-size').value || '---',
-            qty: 1,
-            cartId: Date.now()
-        });
-        updateCartCount();
-        closeModals();
-    }
-
-    function updateCartCount() {
+        cart.push({ ...tempProd, choiceColor: document.getElementById('opt-color').value, choiceSize: document.getElementById('opt-size').value || 'N/A', cid: Date.now() });
         document.getElementById('cart-count').innerText = cart.length;
+        closeModals();
     }
 
     function openCart() {
@@ -238,19 +226,18 @@
     function renderCart() {
         const list = document.getElementById('cart-items');
         list.innerHTML = cart.map(i => `
-            <div class="cart-item">
-                <div style="flex:1"><b>${i.title}</b><br><small>${i.choiceColor} | ${i.choiceSize}</small></div>
-                <div style="color:red; cursor:pointer" onclick="deleteFromCart(${i.cartId})">🗑️</div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span>${i.title} (${i.choiceColor})</span>
+                <span style="color:red; cursor:pointer" onclick="removeFromCart(${i.cid})">🗑️</span>
             </div>`).join('');
-        const sub = cart.reduce((s,i) => s + i.price, 0);
-        document.getElementById('sub-total').innerText = sub.toLocaleString();
-        document.getElementById('main-total').innerText = (sub + 5000).toLocaleString();
+        const total = cart.reduce((s,i) => s + i.price, 0) + 5000;
+        document.getElementById('total-price-div').innerHTML = `<b>الإجمالي مع التوصيل: ${total.toLocaleString()} د.ع</b>`;
     }
 
-    function deleteFromCart(cid) {
-        cart = cart.filter(i => i.cartId !== cid);
+    function removeFromCart(cid) {
+        cart = cart.filter(i => i.cid !== cid);
         if(cart.length === 0) closeModals(); else renderCart();
-        updateCartCount();
+        document.getElementById('cart-count').innerText = cart.length;
     }
 
     function openCheckout() {
@@ -261,100 +248,115 @@
     function finishOrder() {
         const phone = document.getElementById('f-phone').value;
         const city = document.getElementById('f-city').value;
-        if(!phone || !city) return alert("يرجى إدخال الهاتف والمحافظة");
+        if(!phone || !city) return alert("يرجى ملئ البيانات");
 
         const btn = document.getElementById('final-btn');
-        btn.innerText = "جاري الإرسال...";
-        btn.disabled = true;
+        btn.innerText = "جاري الإرسال..."; btn.disabled = true;
 
         let itemsInfo = cart.map(i => `- ${i.title} (${i.choiceColor}/${i.choiceSize})`).join('\n');
         let total = cart.reduce((s,i) => s + i.price, 0) + 5000;
 
-        const templateParams = {
+        const params = {
             from_name: db.user.name,
             phone: phone,
-            address: `${city} - ${document.getElementById('f-area').value}`,
-            message: `قائمة المشتريات:\n${itemsInfo}\n\nالإجمالي المطلوب: ${total.toLocaleString()} د.ع\nملاحظات: ${document.getElementById('f-note').value}`,
-            title: "طلب جديد من المتجر"
+            address: `${city} - ${document.getElementById('f-addr').value}`,
+            message: `الطلب:\n${itemsInfo}\nالإجمالي: ${total} د.ع\nالدفع: ${document.getElementById('f-pay').value}`
         };
 
-        emailjs.send("service_ga7ytjo", "template_lgvpsns", templateParams)
+        emailjs.send("service_ga7ytjo", "template_lgvpsns", params)
         .then(() => {
-            alert("✅ شكراً لثقتكم! تم إرسال طلبكم بنجاح.");
-            db.orders.push({id: Date.now(), user: db.user.name, total: total, time: Date.now(), items: [...cart]});
-            localStorage.setItem('orders_elite', JSON.stringify(db.orders));
-            cart = []; updateCartCount(); location.reload();
-        }, (err) => {
-            alert("حدث خطأ في الإرسال، يرجى المحاولة لاحقاً");
-            btn.disabled = false;
-            btn.innerText = "تأكيد الطلب النهائي ✅";
+            alert("تم إرسال طلبك بنجاح!");
+            const newOrder = { id: Date.now(), user: db.user.name, total: total, time: Date.now(), items: [...cart] };
+            db.orders.push(newOrder);
+            localStorage.setItem('elite_orders', JSON.stringify(db.orders));
+            cart = []; document.getElementById('cart-count').innerText = 0;
+            location.reload();
+        }, () => { alert("خطأ في الإرسال"); btn.disabled = false; btn.innerText = "إرسال الطلب"; });
+    }
+
+    // نظام عرض وإلغاء الطلبات (تعمل الآن 100%)
+    function renderMyOrders() {
+        const list = document.getElementById('my-orders-list');
+        const my = db.orders.filter(o => o.user === db.user.name);
+        if(my.length === 0) { list.innerHTML = "<p>لا توجد طلبات</p>"; return; }
+        
+        list.innerHTML = my.reverse().map(o => {
+            const passed = (Date.now() - o.time) / 1000 / 60 / 60;
+            const canCancel = passed < 2; // متاح لمدة ساعتين
+            return `
+                <div class="order-card">
+                    <b>رقم الطلب: #${o.id.toString().slice(-4)}</b><br>
+                    المبلغ: ${o.total.toLocaleString()} د.ع<br>
+                    الوقت: ${new Date(o.time).toLocaleString('ar-EG')}<br>
+                    ${canCancel ? `<button class="btn btn-d" style="width:auto; padding:5px 15px;" onclick="cancelOrder(${o.id})">إلغاء الطلب</button>` : '<small style="color:gray">لا يمكن الإلغاء (انتهى الوقت)</small>'}
+                </div>`;
+        }).join('');
+    }
+
+    function cancelOrder(id) {
+        if(confirm("هل أنت متأكد من الإلغاء؟")) {
+            db.orders = db.orders.filter(o => o.id !== id);
+            localStorage.setItem('elite_orders', JSON.stringify(db.orders));
+            renderMyOrders();
+        }
+    }
+
+    // لوحة التاجر المتكاملة
+    function adminSaveProduct() {
+        const title = document.getElementById('adm-title').value;
+        const price = parseInt(document.getElementById('adm-price').value);
+        if(!title || !price) return alert("بيانات ناقصة");
+
+        db.products.unshift({
+            id: Date.now(),
+            title: title,
+            price: price,
+            cat: document.getElementById('adm-cat').value,
+            img: document.getElementById('adm-img').value || 'https://via.placeholder.com/150',
+            colors: document.getElementById('adm-colors').value || 'أساسي',
+            sizes: document.getElementById('adm-sizes').value || '',
+            status: 'a'
         });
+        localStorage.setItem('elite_prods', JSON.stringify(db.products));
+        alert("تم الحفظ");
+        renderAdminList(); renderProducts();
+    }
+
+    function renderAdminList() {
+        const list = document.getElementById('admin-list');
+        list.innerHTML = db.products.map(p => `
+            <div style="background:white; padding:10px; margin-bottom:5px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+                <span>${p.title}</span>
+                <div>
+                    <button onclick="toggleStatus(${p.id})">${p.status=='a'?'نفذ':'توفر'}</button>
+                    <button onclick="deleteProd(${p.id})" style="color:red">حذف</button>
+                </div>
+            </div>`).join('');
+    }
+
+    function toggleStatus(id) {
+        const p = db.products.find(x => x.id === id);
+        p.status = p.status === 'a' ? 'o' : 'a';
+        localStorage.setItem('elite_prods', JSON.stringify(db.products));
+        renderAdminList(); renderProducts();
+    }
+
+    function deleteProd(id) {
+        if(confirm("حذف المنتج؟")) {
+            db.products = db.products.filter(p => p.id !== id);
+            localStorage.setItem('elite_prods', JSON.stringify(db.products));
+            renderAdminList(); renderProducts();
+        }
     }
 
     function showScreen(scr) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(scr + '-screen').classList.add('active');
         if(scr === 'orders') renderMyOrders();
-        if(scr === 'admin') renderAdmin();
-    }
-
-    function renderMyOrders() {
-        const list = document.getElementById('my-orders-list');
-        const my = db.orders.filter(o => o.user === db.user.name);
-        list.innerHTML = my.reverse().map(o => {
-            const canCancel = (Date.now() - o.time) < (2 * 60 * 60 * 1000);
-            return `<div style="background:white; padding:15px; margin-bottom:10px; border-radius:12px; border-right: 5px solid var(--primary);">
-                    <b>طلب رقم #${o.id.toString().slice(-4)}</b><br>
-                    المبلغ: ${o.total.toLocaleString()} د.ع<br>
-                    ${canCancel ? `<button style="color:red; border:none; background:none; cursor:pointer; padding:0; margin-top:5px;" onclick="cancelOrder(${o.id})">إلغاء الطلب</button>` : '<small style="color:green">تم تثبيت الطلب</small>'}
-                </div>`;
-        }).join('') || "لا يوجد طلبات حالياً";
-    }
-
-    function cancelOrder(id) {
-        if(confirm("هل أنت متأكد من إلغاء الطلب؟")) {
-            db.orders = db.orders.filter(o => o.id !== id);
-            localStorage.setItem('orders_elite', JSON.stringify(db.orders));
-            renderMyOrders();
-        }
-    }
-
-    function adminAddProduct() {
-        const title = document.getElementById('adm-title').value;
-        const price = document.getElementById('adm-price').value;
-        if(!title || !price) return alert("اكمل بيانات المنتج");
-        db.products.push({
-            id: Date.now(),
-            title: title,
-            price: parseInt(price),
-            cat: "الكل",
-            img: document.getElementById('adm-img').value || 'https://via.placeholder.com/150',
-            colors: document.getElementById('adm-colors').value || 'أساسي',
-            sizes: document.getElementById('adm-sizes').value || '',
-            status: 'a'
-        });
-        localStorage.setItem('products_elite', JSON.stringify(db.products));
-        alert("تمت الإضافة");
-        renderAdmin(); renderProducts();
-    }
-
-    function renderAdmin() {
-        const list = document.getElementById('admin-data');
-        list.innerHTML = `<h4>المنتجات الحالية:</h4>` + db.products.map(p => `
-            <div style="display:flex; justify-content:space-between; background:white; padding:8px; margin-bottom:5px; border-radius:8px;">
-                <span>${p.title}</span>
-                <button onclick="delP(${p.id})" style="color:red; border:none; background:none;">حذف</button>
-            </div>`).join('');
-    }
-
-    function delP(id) {
-        db.products = db.products.filter(p => p.id !== id);
-        localStorage.setItem('products_elite', JSON.stringify(db.products));
-        renderAdmin();
+        if(scr === 'admin') renderAdminList();
     }
 
     function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-    
     window.onload = initApp;
 </script>
 </body>
