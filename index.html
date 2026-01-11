@@ -1,290 +1,293 @@
-import React, { useEffect, useMemo, useState } from "react"; import { createRoot } from "react-dom/client"; import bcrypt from "bcryptjs"; import { v4 as uuidv4 } from "uuid";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TITAN X-SILICON | الترسانة البرمجية</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&display=swap" rel="stylesheet">
 
-/* TITAN.OS - React Single File (RTL Arabic)
+    <style>
+        :root {
+            --primary: #000000;
+            --accent: #ffcc00;
+            --surface: #ffffff;
+            --bg: #f0f2f5;
+            --text-main: #1c1e21;
+            --text-sub: #606770;
+            --radius-xl: 30px;
+            --shadow-lux: 0 20px 40px rgba(0,0,0,0.1);
+        }
 
-ميزات عالمية: PWA hooks, Accessible, RTL, Search, Filters, Cart (quantity), Checkout validation, Admin (hashed PIN + rate limit), Orders management, CSV export, localStorage persistence, graceful EmailJS fallback and error handling.
+        * { box-sizing: border-box; font-family: 'Cairo', sans-serif; outline: none; }
+        body { margin: 0; background: var(--bg); color: var(--text-main); overflow-x: hidden; }
 
+        /* --- NAVIGATION --- */
+        nav {
+            position: sticky; top: 0; z-index: 1000; background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(20px); padding: 15px 5%; display: flex;
+            justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .logo-box { display: flex; flex-direction: column; }
+        .logo-box b { font-size: 24px; letter-spacing: -1px; }
+        .logo-box span { font-size: 10px; color: var(--text-sub); font-weight: 800; text-transform: uppercase; }
 
-ملاحظة:
+        .nav-icons { display: flex; gap: 20px; align-items: center; }
+        .icon-btn { position: relative; cursor: pointer; font-size: 20px; transition: 0.3s; }
+        .badge {
+            position: absolute; top: -8px; right: -10px; background: red; color: #fff;
+            font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 900;
+        }
 
-يحتاج مشروع React + Tailwind setup لتعمل الستايلات. (Tailwind مُفترض متوفر)
+        /* --- HERO SECTION --- */
+        .hero {
+            padding: 40px 5%; background: var(--primary); color: #fff;
+            border-radius: 0 0 50px 50px; margin-bottom: 30px; text-align: center;
+        }
 
-يتطلب تثبيت الحزم: bcryptjs, uuid, emailjs-com (أو استخدم fetch لواجهة بريدية). */
+        /* --- PRODUCT GRID --- */
+        .container { padding: 0 5% 100px 5%; }
+        .grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 25px;
+        }
+        .product-card {
+            background: var(--surface); border-radius: var(--radius-xl); padding: 15px;
+            box-shadow: var(--shadow-lux); transition: 0.4s ease; position: relative;
+            border: 1px solid transparent;
+        }
+        .product-card:hover { transform: translateY(-10px); border-color: var(--accent); }
+        .img-wrapper {
+            width: 100%; height: 200px; border-radius: 20px; overflow: hidden;
+            background: #f9f9f9; margin-bottom: 15px;
+        }
+        .img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .product-card:hover img { transform: scale(1.1); }
 
+        .price-tag { font-size: 20px; font-weight: 900; color: var(--primary); }
+        .title-tag { font-size: 14px; color: var(--text-sub); margin: 5px 0 15px 0; }
+        
+        .add-btn {
+            width: 100%; padding: 12px; border: none; border-radius: 15px;
+            background: var(--primary); color: var(--accent); font-weight: 900;
+            cursor: pointer; display: flex; justify-content: center; gap: 10px;
+        }
 
-const STORAGE_KEYS = { PRODUCTS: "titan_products_v2", CART: "titan_cart_v2", ORDERS: "titan_orders_v2", ADMIN_ATTEMPTS: "titan_admin_attempts_v2", };
+        /* --- CYBER CART DRAWER --- */
+        .drawer {
+            position: fixed; top: 0; left: -100%; width: 100%; max-width: 450px;
+            height: 100%; background: #fff; z-index: 2000; transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            padding: 40px; box-shadow: 20px 0 60px rgba(0,0,0,0.2);
+        }
+        .drawer.active { left: 0; }
+        .overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            z-index: 1999; display: none;
+        }
 
-// هش لكلمة المرور (PIN) محفوظ هنا على هيئة hash (مثال): // unhashed PIN: 1122 const ADMIN_HASHED_PIN = bcrypt.hashSync("1122", 8); // in production: move to server/env
+        /* --- ADMIN PANEL --- */
+        #admin-panel {
+            position: fixed; inset: 0; background: #000; z-index: 5000;
+            color: #0f0; padding: 40px; display: none; font-family: 'Courier New', monospace;
+        }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+        .kpi-card { border: 1px solid #0f0; padding: 20px; border-radius: 10px; }
 
-// نموذج بيانات مبدئي const seedProducts = [ { id: 101, name: "ساعة رولكس دايتونا", price: 450000, category: "ساعات", stock: 5, img: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80", colors: ["ذهبي", "فضي"], sizes: ["40mm"] }, { id: 102, name: "عطر توم فورد عود", price: 210000, category: "عطور", stock: 12, img: "https://images.unsplash.com/photo-1594035910387-fea477942698?w=800&q=80", colors: ["ستاندرد"], sizes: ["50ml", "100ml"] }, { id: 103, name: "نايكي إير جوردن", price: 85000, category: "أحذية", stock: 8, img: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&q=80", colors: ["أحمر", "أسود", "أبيض"], sizes: ["40", "41", "42", "43", "44"] }, { id: 104, name: "سماعة آبل ماكس", price: 320000, category: "إلكترونيات", stock: 4, img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80", colors: ["فضي", "رمادي"], sizes: ["Standard"] }, ];
+        /* --- ANIMATIONS --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade { animation: fadeIn 0.5s ease forwards; }
 
-// Helper: persist/restore const usePersistedState = (key, initial) => { const [state, setState] = useState(() => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : initial; } catch (e) { return initial; } }); useEffect(() => { localStorage.setItem(key, JSON.stringify(state)); }, [key, state]); return [state, setState]; };
+    </style>
+</head>
+<body>
 
-// Phone validation (Iraq-ish pattern, flexible) const validatePhone = (p) => { const cleaned = p.replace(/[^0-9+]/g, ""); return /^(+?964|0)?7\d{8}$/.test(cleaned); };
-
-// CSV export utility const ordersToCSV = (orders) => { const header = ["Order ID", "Customer", "Phone", "City", "Address", "Items", "Total", "Status", "Timestamp"]; const rows = orders.map(o => [o.id, o.customer.name, o.customer.phone, o.customer.city, o.customer.addr, o.items, o.total, o.status, o.timestamp]); const csv = [header, ...rows].map(r => r.map(cell => "${(String(cell)).replace(/"/g, '""')}").join(",")).join("\n"); return "data:text/csv;charset=utf-8," + encodeURIComponent(csv); };
-
-function App() { const [products, setProducts] = usePersistedState(STORAGE_KEYS.PRODUCTS, seedProducts); const [cart, setCart] = usePersistedState(STORAGE_KEYS.CART, []); const [orders, setOrders] = usePersistedState(STORAGE_KEYS.ORDERS, []);
-
-// UI state const [query, setQuery] = useState(""); const [activeCat, setActiveCat] = useState("الكل"); const [selectedProduct, setSelectedProduct] = useState(null); const [isCartOpen, setCartOpen] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [adminLock, setAdminLock] = useState(false); const [adminAttempts, setAdminAttempts] = useState(() => { try { return JSON.parse(sessionStorage.getItem(STORAGE_KEYS.ADMIN_ATTEMPTS)) || { tries: 0, lockedUntil: null }; } catch(e){ return {tries:0, lockedUntil:null}; } });
-
-useEffect(() => { sessionStorage.setItem(STORAGE_KEYS.ADMIN_ATTEMPTS, JSON.stringify(adminAttempts)); }, [adminAttempts]);
-
-// Derived categories const categories = useMemo(() => ["الكل", ...Array.from(new Set(products.map(p => p.category)))], [products]);
-
-// Filtered products const filtered = useMemo(() => { let list = products; if (activeCat !== "الكل") list = list.filter(p => p.category === activeCat); if (query.trim()) { const q = query.trim().toLowerCase(); list = list.filter(p => (p.name + " " + p.category).toLowerCase().includes(q)); } return list; }, [products, activeCat, query]);
-
-// Cart helpers const addToCart = (product, { color=null, size=null, qty=1 } = {}) => { if (product.stock < qty) return alert("الكمية المطلوبة أعلى من المتوفر"); setCart(prev => { const existing = prev.find(i => i.productId === product.id && i.color === color && i.size === size); if (existing) { return prev.map(i => i.cartId === existing.cartId ? { ...i, qty: i.qty + qty } : i); } return [{ cartId: uuidv4(), productId: product.id, name: product.name, price: product.price, img: product.img, color, size, qty }, ...prev]; }); // optimistic UI stock decrease (reserved) setProducts(prev => prev.map(p => p.id === product.id ? { ...p, stock: p.stock - qty } : p)); };
-
-const updateCartQty = (cartId, qty) => { setCart(prev => prev.map(i => i.cartId === cartId ? { ...i, qty } : i)); };
-
-const removeCartItem = (cartId) => { // restore stock const item = cart.find(i => i.cartId === cartId); if (item) setProducts(prev => prev.map(p => p.id === item.productId ? { ...p, stock: p.stock + item.qty } : p)); setCart(prev => prev.filter(i => i.cartId !== cartId)); };
-
-const cartTotal = cart.reduce((a,b) => a + b.price * b.qty, 0);
-
-// Checkout const submitOrder = async ({ name, phone, city, addr }) => { if (!name || !validatePhone(phone) || !addr) return alert("يرجى إدخال بيانات صحيحة.");
-
-const order = {
-  id: "ORD-" + uuidv4().split('-')[0].toUpperCase(),
-  customer: { name, phone, city, addr },
-  items: cart.map(i => `${i.name} (${i.color||'-'}/${i.size||'-'} x${i.qty})`).join(' + '),
-  total: cartTotal,
-  status: 'قيد الانتظار',
-  timestamp: new Date().toLocaleString()
-};
-
-// try sending email via EmailJS or fallback to console
-try {
-  if (window.emailjs) {
-    await window.emailjs.send("service_ga7ytjo", "template_lgvpsns", {
-      order_id: order.id,
-      from_name: name,
-      message: `${order.items} | Total: ${order.total}`,
-      phone: phone
-    });
-  } else {
-    console.info("EmailJS not available - would send: ", order);
-  }
-} catch (e) {
-  console.warn("Email send failed", e);
-}
-
-setOrders(prev => [order, ...prev]);
-setCart([]);
-alert("تم استلام طلبك بنجاح! رقم التتبع: " + order.id);
-setCartOpen(false);
-
-};
-
-// Admin functions const tryAdminLogin = (pin) => { const now = Date.now(); if (adminAttempts.lockedUntil && now < adminAttempts.lockedUntil) return alert("محاولة مقفلة مؤقتًا. انتظر قليلاً.");
-
-if (bcrypt.compareSync(pin, ADMIN_HASHED_PIN)) {
-  setIsAdmin(true);
-  setAdminAttempts({ tries: 0, lockedUntil: null });
-} else {
-  const tries = (adminAttempts.tries || 0) + 1;
-  let lockedUntil = null;
-  if (tries >= 3) lockedUntil = now + 5 * 60 * 1000; // 5 minutes lock
-  setAdminAttempts({ tries, lockedUntil });
-  alert("رمز خاطئ. المحاولات المتبقية: " + Math.max(0, 3 - tries));
-}
-
-};
-
-const logoutAdmin = () => setIsAdmin(false);
-
-const updateOrderStatus = (orderId, status) => { setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o)); };
-
-const deleteOrder = (orderId) => { if (!confirm("حذف نهائي؟")) return; setOrders(prev => prev.filter(o => o.id !== orderId)); };
-
-// PWA service worker registration helper (simple) useEffect(() => { if ('serviceWorker' in navigator) { navigator.serviceWorker?.register('/sw.js').catch(() => console.info('SW registration failed or not provided')); } }, []);
-
-// Export CSV const exportOrdersCSV = () => { const href = ordersToCSV(orders); const a = document.createElement('a'); a.href = href; a.download = 'orders.csv'; a.click(); };
-
-return ( <div dir="rtl" lang="ar" className="min-h-screen bg-gray-100 text-gray-800 antialiased"> <header className="bg-white shadow sticky top-0 z-40"> <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between"> <div className="flex items-center gap-3"> <div className="text-2xl font-black">TITAN<span className="text-yellow-600">.OS</span></div> <div className="text-sm text-gray-500">Cyber‑Architecture Market</div> </div> <div className="flex items-center gap-3"> <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="ابحث عن منتج" className="px-3 py-2 border rounded-lg" /> <div className="relative"> <button onClick={()=>setCartOpen(true)} className="px-3 py-2 bg-black text-yellow-300 rounded-lg font-bold">عربة ({cart.length})</button> </div> <div className="text-sm text-gray-600">المجموع: <b>{cartTotal.toLocaleString()} د.ع</b></div> </div> </div> </header>
-
-<main className="max-w-6xl mx-auto px-4 py-6">
-    <section className="mb-4">
-      <div className="flex items-center gap-2 overflow-x-auto">
-        {categories.map(c => (
-          <button key={c} onClick={()=>setActiveCat(c)} className={`px-4 py-2 rounded-full font-semibold ${activeCat===c? 'bg-black text-yellow-300' : 'bg-gray-200'}`}>{c}</button>
-        ))}
-      </div>
-    </section>
-
-    <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {filtered.map(p => (
-        <article key={p.id} className="bg-white rounded-2xl shadow p-3 hover:shadow-lg transition cursor-pointer" onClick={()=>setSelectedProduct(p)}>
-          <div className="h-44 w-full overflow-hidden rounded-xl mb-3 bg-gray-50">
-            <img src={p.img} alt={p.name} className="w-full h-full object-cover" />
-          </div>
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-bold text-sm">{p.name}</h3>
-              <div className="text-xs text-gray-500">{p.category}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-extrabold">{p.price.toLocaleString()} د.ع</div>
-              <div className={`text-xs mt-1 ${p.stock>0? 'text-green-600':'text-red-500'}`}>{p.stock>0? `متوفر: ${p.stock}`: 'نفذت الكمية'}</div>
-            </div>
-          </div>
-        </article>
-      ))}
-    </section>
-
-    <footer className="mt-8 text-center text-sm text-gray-500">© TITAN.OS — نسخة تجريبية. اطلب ربط Backend للإنتاج.</footer>
-  </main>
-
-  {/* Product Modal */}
-  {selectedProduct && (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={(e)=>{ if(e.target===e.currentTarget) setSelectedProduct(null); }}>
-      <div className="bg-white max-w-xl w-full rounded-2xl p-6 shadow-lg">
-        <div className="flex gap-4">
-          <img src={selectedProduct.img} alt="" className="w-40 h-40 object-cover rounded-lg" />
-          <div className="flex-1">
-            <h2 className="font-extrabold text-lg">{selectedProduct.name}</h2>
-            <div className="text-yellow-600 font-black text-xl mt-2">{selectedProduct.price.toLocaleString()} د.ع</div>
-            <div className="text-sm text-gray-500 mt-2">المخزون: {selectedProduct.stock}</div>
-
-            <div className="mt-4">
-              <label className="block text-sm font-semibold mb-1">اللون</label>
-              <div className="flex gap-2 flex-wrap">
-                {selectedProduct.colors.map(c => (
-                  <button key={c} className="px-3 py-1 border rounded bg-gray-50" onClick={()=>{ /* noop, local selection below */ }}>{c}</button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-3 flex items-center gap-3">
-              <label className="text-sm font-semibold">الكمية</label>
-              <QtySelector max={selectedProduct.stock} onAdd={(qty,color,size)=>{
-                addToCart(selectedProduct, { qty, color, size });
-                setSelectedProduct(null);
-              }} />
-            </div>
-
-            <div className="mt-4">
-              <button className="px-4 py-2 bg-black text-yellow-300 rounded-lg font-bold" onClick={()=>{ addToCart(selectedProduct, { qty:1 }); setSelectedProduct(null); }}>أضف للسلة</button>
-            </div>
-          </div>
+    <nav>
+        <div class="logo-box" onclick="location.reload()">
+            <b>TITAN X</b>
+            <span>Silicon Architecture v4.0</span>
         </div>
-      </div>
-    </div>
-  )}
-
-  {/* Cart Drawer */}
-  <div className={`fixed top-0 ${isCartOpen? 'right-0':'-right-full'} h-full w-full sm:w-[420px] bg-white shadow-2xl z-50 transition-all`} style={{direction:'rtl'}}>
-    <div className="p-4 flex items-center justify-between border-b">
-      <h3 className="font-bold">حقيبة التسوق ({cart.length})</h3>
-      <div className="flex items-center gap-2">
-        <div className="text-sm">{cartTotal.toLocaleString()} د.ع</div>
-        <button className="px-3 py-1" onClick={()=>setCartOpen(false)}>إغلاق</button>
-      </div>
-    </div>
-    <div className="p-4 overflow-auto h-[70vh]">
-      {cart.length===0 && <div className="text-center text-gray-500">السلة فارغة</div>}
-      {cart.map(item => (
-        <div key={item.cartId} className="flex items-center gap-3 border-b py-3">
-          <img src={item.img} alt="" className="w-14 h-14 object-cover rounded" />
-          <div className="flex-1">
-            <div className="font-semibold">{item.name}</div>
-            <div className="text-xs text-gray-500">{item.color||'-'} | {item.size||'-'}</div>
-            <div className="mt-2 flex items-center gap-2">
-              <QtySmall value={item.qty} onChange={(v)=>updateCartQty(item.cartId, v)} max={products.find(p=>p.id===item.productId)?.stock + item.qty || 99} />
-              <div className="font-extrabold">{(item.price*item.qty).toLocaleString()} د.ع</div>
+        <div class="nav-icons">
+            <div class="icon-btn" onclick="openAdmin()"><i class="fa-solid fa-user-shield"></i></div>
+            <div class="icon-btn" onclick="toggleCart(true)">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="badge" id="cart-count">0</span>
             </div>
-          </div>
-          <div>
-            <button className="text-red-500" onClick={()=>removeCartItem(item.cartId)}>حذف</button>
-          </div>
         </div>
-      ))}
-    </div>
-    <div className="p-4 border-t">
-      <div className="flex justify-between items-center font-extrabold mb-3">الإجمالي <span>{cartTotal.toLocaleString()} د.ع</span></div>
-      <CheckoutForm onSubmit={submitOrder} disabled={cart.length===0} />
-    </div>
-  </div>
+    </nav>
 
-  {/* Admin Panel Modal */}
-  <div className="fixed bottom-6 left-6 z-40">
-    {!isAdmin ? (
-      <button className="px-4 py-2 bg-white border rounded-lg shadow" onClick={()=>setAdminLock(true)}>لوحة الادمن</button>
-    ) : (
-      <div className="bg-white p-3 rounded-lg shadow">
-        <div className="flex gap-2 items-center"><b>مرحبا، المدير</b></div>
-        <div className="mt-2 flex gap-2">
-          <button className="px-3 py-1 bg-red-100 rounded" onClick={logoutAdmin}>خروج</button>
-          <button className="px-3 py-1 bg-gray-100 rounded" onClick={()=>{ const href = ordersToCSV(orders); const a = document.createElement('a'); a.href=href; a.download='orders.csv'; a.click(); }}>تصدير CSV</button>
+    <div class="hero">
+        <h1 style="margin:0; font-size:32px;">متجر القمة</h1>
+        <p style="color: var(--accent); font-weight: 600;">الأداء الأقوى.. التصميم الأرقى</p>
+    </div>
+
+    <div class="container">
+        <div class="grid" id="product-list"></div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="toggleCart(false)"></div>
+    <div class="drawer" id="cart-drawer">
+        <h2 style="font-weight:900; border-bottom: 3px solid var(--accent); display:inline-block;">حقيبة التسوق</h2>
+        <div id="cart-content" style="margin-top:30px; height:60vh; overflow-y:auto;"></div>
+        
+        <div style="background:#f8f9fa; padding:20px; border-radius:20px; margin-top:20px;">
+            <div style="display:flex; justify-content:space-between; font-weight:900; font-size:22px;">
+                <span>الإجمالي:</span>
+                <span id="cart-total">0 د.ع</span>
+            </div>
+            <button class="add-btn" style="margin-top:20px; background:#222; height:60px;" onclick="checkout()">
+                إتمام العملية الآن <i class="fa-solid fa-arrow-left"></i>
+            </button>
         </div>
-      </div>
-    )}
-  </div>
-
-  {/* Admin Lock Dialog */}
-  {adminLock && !isAdmin && (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center" onClick={(e)=>{ if(e.target===e.currentTarget) setAdminLock(false); }}>
-      <div className="bg-white rounded p-6 w-full max-w-sm">
-        <h3 className="font-bold mb-2">🔐 دخول الادمن</h3>
-        <AdminLogin onCancel={()=>setAdminLock(false)} onLogin={(pin)=>{ tryAdminLogin(pin); setAdminLock(false); }} attempts={adminAttempts} />
-      </div>
     </div>
-  )}
 
-  {/* Admin Dashboard overlay (simple) */}
-  {isAdmin && (
-    <div className="fixed inset-0 bg-black/40 z-40 p-8 overflow-auto">
-      <div className="max-w-4xl mx-auto bg-white rounded p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="font-extrabold">لوحة التحكم - الطلبات ({orders.length})</h2>
-          <div className="flex gap-2">
-            <button className="px-3 py-1 bg-gray-100 rounded" onClick={()=>setIsAdmin(false)}>إغلاق</button>
-            <button className="px-3 py-1 bg-green-100 rounded" onClick={exportOrdersCSV}>تصدير CSV</button>
-          </div>
+    <div id="admin-panel">
+        <div style="display:flex; justify-content:space-between;">
+            <h1>[TITAN_DASHBOARD]</h1>
+            <button onclick="closeAdmin()" style="background:#0f0; color:#000; border:none; padding:10px 20px; font-weight:900;">EXIT</button>
         </div>
-        <div>
-          <table className="w-full text-sm">
-            <thead className="text-right">
-              <tr className="bg-gray-50"><th className="p-2">Order ID</th><th>الزبون</th><th>العناصر</th><th>الإجمالي</th><th>الحالة</th><th>إجراء</th></tr>
-            </thead>
-            <tbody>
-              {orders.map(o => (
-                <tr key={o.id} className="border-b">
-                  <td className="p-2">{o.id}<br/><small className="text-gray-400">{o.timestamp}</small></td>
-                  <td>{o.customer.name}<br/><small>{o.customer.phone}</small></td>
-                  <td>{o.items}</td>
-                  <td className="font-bold">{o.total.toLocaleString()} د.ع</td>
-                  <td>
-                    <select value={o.status} onChange={(e)=>updateOrderStatus(o.id, e.target.value)} className="border px-2 py-1 rounded">
-                      <option>قيد الانتظار</option>
-                      <option>تم الشحن</option>
-                      <option>واصل</option>
-                      <option>ملغي</option>
-                    </select>
-                  </td>
-                  <td><button className="text-red-500" onClick={()=>deleteOrder(o.id)}>حذف</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div class="kpi-grid">
+            <div class="kpi-card"><h3>الأرباح</h3><p id="adm-rev">0</p></div>
+            <div class="kpi-card"><h3>الطلبات</h3><p id="adm-ord">0</p></div>
+            <div class="kpi-card"><h3>الزوار</h3><p>+1.2k</p></div>
         </div>
-      </div>
+        <div id="order-log" style="background:#111; padding:20px; height:300px; overflow-y:auto; border:1px solid #0f0;">
+            > النظام جاهز.. بانتظار العمليات..
+        </div>
     </div>
-  )}
-</div>
 
-); }
+    <script>
+        // --- DATA HUB ---
+        const products = [
+            { id: 101, name: "رولكس غواص - إصدار محدود", price: 550000, img: "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?w=600" },
+            { id: 102, name: "عطر ليجند - عود ملكي", price: 180000, img: "https://images.unsplash.com/photo-1544467316-147ca48f7f17?w=600" },
+            { id: 103, name: "آيفون 15 بروماكس - 512GB", price: 1650000, img: "https://images.unsplash.com/photo-1696446701796-da61225697cc?w=600" },
+            { id: 104, name: "سماعة تيتان بخاصية العزل", price: 120000, img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600" },
+            { id: 105, name: "نظارة شمسية - تصميم إيطالي", price: 95000, img: "https://images.unsplash.com/photo-1511499767390-a7335958beab?w=600" },
+            { id: 106, name: "محفظة جلد طبيعي - يدوية", price: 45000, img: "https://images.unsplash.com/photo-1627123424574-724758594e93?w=600" }
+        ];
 
-// Small reusable components function QtySelector({ max=99, onAdd }){ const [qty, setQty] = useState(1); const inc = ()=> setQty(q=> Math.min(max, q+1)); const dec = ()=> setQty(q=> Math.max(1, q-1)); return ( <div className="flex items-center gap-2"> <button onClick={dec} className="px-2 py-1 border rounded">−</button> <input value={qty} onChange={e=>setQty(Math.max(1, Number(e.target.value)||1))} className="w-14 text-center border rounded px-2 py-1" /> <button onClick={inc} className="px-2 py-1 border rounded">+</button> <button onClick={()=>onAdd(qty)} className="px-3 py-1 bg-black text-yellow-300 rounded">إضافة</button> </div> ); }
+        let cart = JSON.parse(localStorage.getItem('titan_v4_cart')) || [];
+        let orders = JSON.parse(localStorage.getItem('titan_v4_orders')) || [];
 
-function QtySmall({ value, onChange, max=99 }){ return ( <div className="flex items-center gap-1"> <button onClick={()=>onChange(Math.max(1, value-1))} className="px-2 py-1 border rounded">−</button> <div className="px-3 py-1 border rounded">{value}</div> <button onClick={()=>onChange(Math.min(max, value+1))} className="px-2 py-1 border rounded">+</button> </div> ); }
+        // --- CORE LOGIC ---
+        function init() {
+            const list = document.getElementById('product-list');
+            list.innerHTML = products.map((p, i) => `
+                <div class="product-card fade" style="animation-delay: ${i*0.1}s">
+                    <div class="img-wrapper"><img src="${p.img}"></div>
+                    <div class="price-tag">${p.price.toLocaleString()} د.ع</div>
+                    <div class="title-tag">${p.name}</div>
+                    <button class="add-btn" onclick="addToCart(${p.id})">
+                        <i class="fa-solid fa-cart-plus"></i> إضافة
+                    </button>
+                </div>
+            `).join('');
+            updateUI();
+        }
 
-function CheckoutForm({ onSubmit, disabled }){ const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [city, setCity] = useState("بغداد"); const [addr, setAddr] = useState("");
+        function addToCart(id) {
+            const prod = products.find(p => p.id === id);
+            cart.push({ ...prod, cartId: Date.now() });
+            saveAndSync();
+            notify(`تمت إضافة ${prod.name}`);
+        }
 
-return ( <div className="flex flex-col gap-2"> <input placeholder="الاسم الكامل" value={name} onChange={e=>setName(e.target.value)} className="px-3 py-2 border rounded" /> <input placeholder="رقم الهاتف" value={phone} onChange={e=>setPhone(e.target.value)} className="px-3 py-2 border rounded" /> <select value={city} onChange={e=>setCity(e.target.value)} className="px-3 py-2 border rounded"> <option>بغداد</option><option>البصرة</option><option>أربيل</option><option>النجف</option><option>الموصل</option> </select> <textarea placeholder="أقرب نقطة دالة..." value={addr} onChange={e=>setAddr(e.target.value)} className="px-3 py-2 border rounded" /> <button disabled={disabled} onClick={()=>onSubmit({ name, phone, city, addr })} className={px-4 py-2 rounded ${disabled? 'bg-gray-300':'bg-black text-yellow-300 font-bold'}}>🚀 إرسال الطلب</button> </div> ); }
+        function saveAndSync() {
+            localStorage.setItem('titan_v4_cart', JSON.stringify(cart));
+            localStorage.setItem('titan_v4_orders', JSON.stringify(orders));
+            updateUI();
+        }
 
-function AdminLogin({ onLogin, onCancel, attempts }){ const [pin, setPin] = useState(""); return ( <div> <input placeholder="أدخل PIN" value={pin} onChange={e=>setPin(e.target.value)} className="px-3 py-2 border rounded w-full mb-2" /> <div className="flex gap-2"> <button className="px-3 py-1 bg-black text-yellow-300 rounded" onClick={()=>onLogin(pin)}>دخول</button> <button className="px-3 py-1 bg-gray-100 rounded" onClick={onCancel}>إلغاء</button> </div> <div className="text-xs text-gray-500 mt-2">محاولات: {attempts.tries || 0} / 3</div> {attempts.lockedUntil && <div className="text-xs text-red-500">مقفول حتى {new Date(attempts.lockedUntil).toLocaleTimeString()}</div>} </div> ); }
+        function updateUI() {
+            document.getElementById('cart-count').innerText = cart.length;
+            const content = document.getElementById('cart-content');
+            
+            if(cart.length === 0) {
+                content.innerHTML = '<div style="text-align:center; padding:50px; color:#ccc;"><i class="fa-solid fa-box-open" style="font-size:50px;"></i><p>السلة فارغة حالياً</p></div>';
+            } else {
+                content.innerHTML = cart.map((item, index) => `
+                    <div style="display:flex; gap:15px; margin-bottom:20px; background:#f9f9f9; padding:15px; border-radius:20px;">
+                        <img src="${item.img}" style="width:60px; height:60px; border-radius:12px; object-fit:cover;">
+                        <div style="flex:1">
+                            <b style="font-size:13px; display:block;">${item.name}</b>
+                            <b style="color:var(--primary);">${item.price.toLocaleString()} د.ع</b>
+                        </div>
+                        <i class="fa-solid fa-trash-can" style="color:red; cursor:pointer;" onclick="removeItem(${index})"></i>
+                    </div>
+                `).join('');
+            }
 
-// Render to page (for local demo) const container = document.getElementById('root'); if (container) createRoot(container).render(<App />);
+            const total = cart.reduce((a, b) => a + b.price, 0);
+            document.getElementById('cart-total').innerText = total.toLocaleString() + ' د.ع';
+        }
 
-export default App;
+        function removeItem(idx) {
+            cart.splice(idx, 1);
+            saveAndSync();
+        }
+
+        function toggleCart(status) {
+            document.getElementById('cart-drawer').classList.toggle('active', status);
+            document.getElementById('overlay').style.display = status ? 'block' : 'none';
+        }
+
+        function checkout() {
+            if(cart.length === 0) return alert("سيدي، أضف منتجات أولاً.");
+            
+            const name = prompt("يرجى إدخال اسمك الكامل:");
+            if(!name) return;
+
+            const order = {
+                id: 'TX-' + Math.floor(Math.random()*9999),
+                customer: name,
+                items: cart.length,
+                total: cart.reduce((a,b) => a+b.price, 0),
+                time: new Date().toLocaleTimeString()
+            };
+
+            orders.push(order);
+            cart = [];
+            saveAndSync();
+            toggleCart(false);
+            alert(`أمرك سيدي.. تم استلام الطلب رقم ${order.id} بنجاح.`);
+        }
+
+        // --- ADMIN MODULE ---
+        function openAdmin() {
+            const pass = prompt("🔐 دخل الكود السري الخاص بك:");
+            if(pass === "1122") {
+                document.getElementById('admin-panel').style.display = 'block';
+                renderAdmin();
+            } else {
+                alert("محاولة اختراق فاشلة! تم تسجيل الـ IP.");
+            }
+        }
+
+        function renderAdmin() {
+            const rev = orders.reduce((a,b) => a+b.total, 0);
+            document.getElementById('adm-rev').innerText = rev.toLocaleString() + " د.ع";
+            document.getElementById('adm-ord').innerText = orders.length;
+
+            const log = document.getElementById('order-log');
+            log.innerHTML = orders.map(o => `
+                <div style="color:#0f0; margin-bottom:5px;">
+                    > [${o.time}] طلب جديد من ${o.customer} بمبلغ ${o.total} د.ع
+                </div>
+            `).join('') || "> لا يوجد عمليات حالياً..";
+        }
+
+        function closeAdmin() { document.getElementById('admin-panel').style.display = 'none'; }
+
+        function notify(msg) {
+            const n = document.createElement('div');
+            n.innerText = msg;
+            n.style = "position:fixed; bottom:20px; right:20px; background:#000; color:#ffcc00; padding:15px 30px; border-radius:50px; z-index:9999; font-weight:900; box-shadow:0 10px 30px rgba(0,0,0,0.5);";
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 3000);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
