@@ -1,550 +1,290 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN | Cyber-Architecture</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+import React, { useEffect, useMemo, useState } from "react"; import { createRoot } from "react-dom/client"; import bcrypt from "bcryptjs"; import { v4 as uuidv4 } from "uuid";
 
-    <style>
-        /* --- CSS VARIABLES & THEME CONFIG --- */
-        :root {
-            --bg-body: #f4f5f7;
-            --bg-card: #ffffff;
-            --bg-glass: rgba(255, 255, 255, 0.95);
-            --primary: #111111;
-            --accent: #dfa630;
-            --accent-hover: #b88620;
-            --text-main: #1f2937;
-            --text-sub: #6b7280;
-            --border: #e5e7eb;
-            --danger: #ef4444;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --radius: 12px;
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+/* TITAN.OS - React Single File (RTL Arabic)
 
-        /* --- GLOBAL RESET --- */
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        body {
-            margin: 0; font-family: 'Cairo', sans-serif; background: var(--bg-body);
-            color: var(--text-main); font-size: 14px; overflow-x: hidden;
-        }
+ميزات عالمية: PWA hooks, Accessible, RTL, Search, Filters, Cart (quantity), Checkout validation, Admin (hashed PIN + rate limit), Orders management, CSV export, localStorage persistence, graceful EmailJS fallback and error handling.
 
-        /* --- UI COMPONENTS --- */
-        .btn {
-            border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer;
-            transition: var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-primary { background: var(--primary); color: var(--accent); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .btn-danger { background: #fee2e2; color: var(--danger); }
-        .btn-ghost { background: transparent; color: var(--text-sub); }
 
-        .input-field {
-            width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;
-            background: #fff; font-family: inherit; transition: 0.2s;
-        }
-        .input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(223, 166, 48, 0.1); }
+ملاحظة:
 
-        /* --- HEADER & NAV --- */
-        .cyber-header {
-            position: sticky; top: 0; z-index: 900; background: var(--bg-glass);
-            backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
-            padding: 12px 5%; display: flex; justify-content: space-between; align-items: center;
-        }
-        .logo { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
-        .logo span { color: var(--accent); }
-        
-        .nav-tools { display: flex; gap: 15px; }
-        .nav-item { position: relative; cursor: pointer; font-size: 18px; color: var(--text-main); }
-        .badge-counter {
-            position: absolute; top: -5px; right: -8px; background: var(--accent); color: #000;
-            font-size: 10px; font-weight: bold; height: 16px; min-width: 16px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center; padding: 0 4px;
-        }
+يحتاج مشروع React + Tailwind setup لتعمل الستايلات. (Tailwind مُفترض متوفر)
 
-        /* --- CATEGORY BAR --- */
-        .cat-scroll {
-            display: flex; gap: 10px; overflow-x: auto; padding: 15px 5%;
-            background: var(--bg-card); border-bottom: 1px solid var(--border);
-            scrollbar-width: none;
-        }
-        .cat-chip {
-            padding: 6px 16px; border-radius: 20px; background: #f3f4f6; font-size: 12px;
-            font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s;
-        }
-        .cat-chip.active { background: var(--primary); color: var(--accent); }
+يتطلب تثبيت الحزم: bcryptjs, uuid, emailjs-com (أو استخدم fetch لواجهة بريدية). */
 
-        /* --- PRODUCT GRID --- */
-        .grid-layout {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 15px; padding: 20px 5%;
-        }
-        .product-card {
-            background: var(--bg-card); border-radius: var(--radius); overflow: hidden;
-            box-shadow: var(--shadow-sm); border: 1px solid var(--border); position: relative;
-            transition: var(--transition);
-        }
-        .product-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
-        
-        .card-img-box { height: 180px; width: 100%; overflow: hidden; background: #f9fafb; position: relative; }
-        .card-img-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-        .product-card:hover img { transform: scale(1.1); }
-        
-        .stock-badge {
-            position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: #fff;
-            padding: 2px 8px; border-radius: 4px; font-size: 10px; backdrop-filter: blur(4px);
-        }
-        .stock-low { background: var(--danger); }
 
-        .card-info { padding: 12px; }
-        .card-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .card-price { color: var(--primary); font-weight: 900; font-size: 15px; }
+const STORAGE_KEYS = { PRODUCTS: "titan_products_v2", CART: "titan_cart_v2", ORDERS: "titan_orders_v2", ADMIN_ATTEMPTS: "titan_admin_attempts_v2", };
 
-        /* --- MODAL SYSTEM --- */
-        .modal-backdrop {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-            z-index: 2000; display: none; align-items: center; justify-content: center; opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .modal-backdrop.open { display: flex; opacity: 1; }
-        
-        .modal-panel {
-            background: var(--bg-card); width: 100%; max-width: 500px; border-radius: 20px;
-            padding: 25px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-            transform: scale(0.95); transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            max-height: 90vh; overflow-y: auto;
-        }
-        .modal-backdrop.open .modal-panel { transform: scale(1); }
+// هش لكلمة المرور (PIN) محفوظ هنا على هيئة hash (مثال): // unhashed PIN: 1122 const ADMIN_HASHED_PIN = bcrypt.hashSync("1122", 8); // in production: move to server/env
 
-        /* --- VARIANTS & DETAILS --- */
-        .variant-group { margin: 15px 0; }
-        .v-label { font-size: 12px; font-weight: 700; color: var(--text-sub); display: block; margin-bottom: 8px; }
-        .v-options { display: flex; gap: 8px; flex-wrap: wrap; }
-        .v-chip {
-            border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer;
-            font-size: 12px; transition: 0.2s; user-select: none;
-        }
-        .v-chip.selected { border-color: var(--accent); background: #fffbeb; color: #b45309; font-weight: 700; }
+// نموذج بيانات مبدئي const seedProducts = [ { id: 101, name: "ساعة رولكس دايتونا", price: 450000, category: "ساعات", stock: 5, img: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80", colors: ["ذهبي", "فضي"], sizes: ["40mm"] }, { id: 102, name: "عطر توم فورد عود", price: 210000, category: "عطور", stock: 12, img: "https://images.unsplash.com/photo-1594035910387-fea477942698?w=800&q=80", colors: ["ستاندرد"], sizes: ["50ml", "100ml"] }, { id: 103, name: "نايكي إير جوردن", price: 85000, category: "أحذية", stock: 8, img: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&q=80", colors: ["أحمر", "أسود", "أبيض"], sizes: ["40", "41", "42", "43", "44"] }, { id: 104, name: "سماعة آبل ماكس", price: 320000, category: "إلكترونيات", stock: 4, img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80", colors: ["فضي", "رمادي"], sizes: ["Standard"] }, ];
 
-        /* --- ADMIN DASHBOARD --- */
-        #admin-interface { display: none; background: #f8fafc; min-height: 100vh; padding: 20px; }
-        .chart-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .kpi-card { background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .kpi-val { font-size: 20px; font-weight: 900; color: var(--primary); margin-top: 5px; }
-        .status-select { padding: 5px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid #ddd; }
-    </style>
-</head>
-<body>
+// Helper: persist/restore const usePersistedState = (key, initial) => { const [state, setState] = useState(() => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : initial; } catch (e) { return initial; } }); useEffect(() => { localStorage.setItem(key, JSON.stringify(state)); }, [key, state]); return [state, setState]; };
 
-<div id="root">
-    
-    <header class="cyber-header">
-        <div class="logo" onclick="location.reload()">TITAN<span>.OS</span></div>
-        <div class="nav-tools">
-            <div class="nav-item" id="admin-lock" style="opacity: 0.2;" title="Secured"><i class="fa-solid fa-shield-cat"></i></div>
-            <div class="nav-item" onclick="Titan.UI.OpenOrders()"><i class="fa-solid fa-box-open"></i></div>
-            <div class="nav-item" onclick="Titan.UI.OpenCart()">
-                <i class="fa-solid fa-bag-shopping"></i>
-                <span class="badge-counter" id="cart-counter">0</span>
-            </div>
-        </div>
-    </header>
+// Phone validation (Iraq-ish pattern, flexible) const validatePhone = (p) => { const cleaned = p.replace(/[^0-9+]/g, ""); return /^(+?964|0)?7\d{8}$/.test(cleaned); };
 
-    <div class="cat-scroll" id="category-container"></div>
+// CSV export utility const ordersToCSV = (orders) => { const header = ["Order ID", "Customer", "Phone", "City", "Address", "Items", "Total", "Status", "Timestamp"]; const rows = orders.map(o => [o.id, o.customer.name, o.customer.phone, o.customer.city, o.customer.addr, o.items, o.total, o.status, o.timestamp]); const csv = [header, ...rows].map(r => r.map(cell => "${(String(cell)).replace(/"/g, '""')}").join(",")).join("\n"); return "data:text/csv;charset=utf-8," + encodeURIComponent(csv); };
 
-    <main class="grid-layout" id="products-container"></main>
+function App() { const [products, setProducts] = usePersistedState(STORAGE_KEYS.PRODUCTS, seedProducts); const [cart, setCart] = usePersistedState(STORAGE_KEYS.CART, []); const [orders, setOrders] = usePersistedState(STORAGE_KEYS.ORDERS, []);
 
-    <section id="admin-interface">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="margin:0"><i class="fa-solid fa-chart-pie"></i> لوحة التحكم</h2>
-            <button class="btn btn-danger" onclick="location.reload()" style="font-size:12px;">خروج آمن</button>
-        </div>
-        
-        <div class="chart-grid">
-            <div class="kpi-card"><span>إجمالي الدخل</span><div class="kpi-val" id="kpi-revenue">0</div></div>
-            <div class="kpi-card"><span>الطلبات</span><div class="kpi-val" id="kpi-orders">0</div></div>
-            <div class="kpi-card"><span>المخزون</span><div class="kpi-val" id="kpi-stock">0</div></div>
-        </div>
+// UI state const [query, setQuery] = useState(""); const [activeCat, setActiveCat] = useState("الكل"); const [selectedProduct, setSelectedProduct] = useState(null); const [isCartOpen, setCartOpen] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [adminLock, setAdminLock] = useState(false); const [adminAttempts, setAdminAttempts] = useState(() => { try { return JSON.parse(sessionStorage.getItem(STORAGE_KEYS.ADMIN_ATTEMPTS)) || { tries: 0, lockedUntil: null }; } catch(e){ return {tries:0, lockedUntil:null}; } });
 
-        <div style="background:#fff; border-radius:12px; overflow:hidden; border:1px solid #e2e8f0;">
-            <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:right;">
-                <thead style="background:#f1f5f9;">
-                    <tr><th style="padding:10px;">ID</th><th>الزبون</th><th>الحالة</th><th>إجراء</th></tr>
-                </thead>
-                <tbody id="admin-orders-list"></tbody>
-            </table>
-        </div>
+useEffect(() => { sessionStorage.setItem(STORAGE_KEYS.ADMIN_ATTEMPTS, JSON.stringify(adminAttempts)); }, [adminAttempts]);
+
+// Derived categories const categories = useMemo(() => ["الكل", ...Array.from(new Set(products.map(p => p.category)))], [products]);
+
+// Filtered products const filtered = useMemo(() => { let list = products; if (activeCat !== "الكل") list = list.filter(p => p.category === activeCat); if (query.trim()) { const q = query.trim().toLowerCase(); list = list.filter(p => (p.name + " " + p.category).toLowerCase().includes(q)); } return list; }, [products, activeCat, query]);
+
+// Cart helpers const addToCart = (product, { color=null, size=null, qty=1 } = {}) => { if (product.stock < qty) return alert("الكمية المطلوبة أعلى من المتوفر"); setCart(prev => { const existing = prev.find(i => i.productId === product.id && i.color === color && i.size === size); if (existing) { return prev.map(i => i.cartId === existing.cartId ? { ...i, qty: i.qty + qty } : i); } return [{ cartId: uuidv4(), productId: product.id, name: product.name, price: product.price, img: product.img, color, size, qty }, ...prev]; }); // optimistic UI stock decrease (reserved) setProducts(prev => prev.map(p => p.id === product.id ? { ...p, stock: p.stock - qty } : p)); };
+
+const updateCartQty = (cartId, qty) => { setCart(prev => prev.map(i => i.cartId === cartId ? { ...i, qty } : i)); };
+
+const removeCartItem = (cartId) => { // restore stock const item = cart.find(i => i.cartId === cartId); if (item) setProducts(prev => prev.map(p => p.id === item.productId ? { ...p, stock: p.stock + item.qty } : p)); setCart(prev => prev.filter(i => i.cartId !== cartId)); };
+
+const cartTotal = cart.reduce((a,b) => a + b.price * b.qty, 0);
+
+// Checkout const submitOrder = async ({ name, phone, city, addr }) => { if (!name || !validatePhone(phone) || !addr) return alert("يرجى إدخال بيانات صحيحة.");
+
+const order = {
+  id: "ORD-" + uuidv4().split('-')[0].toUpperCase(),
+  customer: { name, phone, city, addr },
+  items: cart.map(i => `${i.name} (${i.color||'-'}/${i.size||'-'} x${i.qty})`).join(' + '),
+  total: cartTotal,
+  status: 'قيد الانتظار',
+  timestamp: new Date().toLocaleString()
+};
+
+// try sending email via EmailJS or fallback to console
+try {
+  if (window.emailjs) {
+    await window.emailjs.send("service_ga7ytjo", "template_lgvpsns", {
+      order_id: order.id,
+      from_name: name,
+      message: `${order.items} | Total: ${order.total}`,
+      phone: phone
+    });
+  } else {
+    console.info("EmailJS not available - would send: ", order);
+  }
+} catch (e) {
+  console.warn("Email send failed", e);
+}
+
+setOrders(prev => [order, ...prev]);
+setCart([]);
+alert("تم استلام طلبك بنجاح! رقم التتبع: " + order.id);
+setCartOpen(false);
+
+};
+
+// Admin functions const tryAdminLogin = (pin) => { const now = Date.now(); if (adminAttempts.lockedUntil && now < adminAttempts.lockedUntil) return alert("محاولة مقفلة مؤقتًا. انتظر قليلاً.");
+
+if (bcrypt.compareSync(pin, ADMIN_HASHED_PIN)) {
+  setIsAdmin(true);
+  setAdminAttempts({ tries: 0, lockedUntil: null });
+} else {
+  const tries = (adminAttempts.tries || 0) + 1;
+  let lockedUntil = null;
+  if (tries >= 3) lockedUntil = now + 5 * 60 * 1000; // 5 minutes lock
+  setAdminAttempts({ tries, lockedUntil });
+  alert("رمز خاطئ. المحاولات المتبقية: " + Math.max(0, 3 - tries));
+}
+
+};
+
+const logoutAdmin = () => setIsAdmin(false);
+
+const updateOrderStatus = (orderId, status) => { setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o)); };
+
+const deleteOrder = (orderId) => { if (!confirm("حذف نهائي؟")) return; setOrders(prev => prev.filter(o => o.id !== orderId)); };
+
+// PWA service worker registration helper (simple) useEffect(() => { if ('serviceWorker' in navigator) { navigator.serviceWorker?.register('/sw.js').catch(() => console.info('SW registration failed or not provided')); } }, []);
+
+// Export CSV const exportOrdersCSV = () => { const href = ordersToCSV(orders); const a = document.createElement('a'); a.href = href; a.download = 'orders.csv'; a.click(); };
+
+return ( <div dir="rtl" lang="ar" className="min-h-screen bg-gray-100 text-gray-800 antialiased"> <header className="bg-white shadow sticky top-0 z-40"> <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between"> <div className="flex items-center gap-3"> <div className="text-2xl font-black">TITAN<span className="text-yellow-600">.OS</span></div> <div className="text-sm text-gray-500">Cyber‑Architecture Market</div> </div> <div className="flex items-center gap-3"> <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="ابحث عن منتج" className="px-3 py-2 border rounded-lg" /> <div className="relative"> <button onClick={()=>setCartOpen(true)} className="px-3 py-2 bg-black text-yellow-300 rounded-lg font-bold">عربة ({cart.length})</button> </div> <div className="text-sm text-gray-600">المجموع: <b>{cartTotal.toLocaleString()} د.ع</b></div> </div> </div> </header>
+
+<main className="max-w-6xl mx-auto px-4 py-6">
+    <section className="mb-4">
+      <div className="flex items-center gap-2 overflow-x-auto">
+        {categories.map(c => (
+          <button key={c} onClick={()=>setActiveCat(c)} className={`px-4 py-2 rounded-full font-semibold ${activeCat===c? 'bg-black text-yellow-300' : 'bg-gray-200'}`}>{c}</button>
+        ))}
+      </div>
     </section>
 
-    <div class="modal-backdrop" id="main-modal" onclick="if(event.target==this) Titan.UI.CloseModal()">
-        <div class="modal-panel" id="modal-content"></div>
-    </div>
+    <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {filtered.map(p => (
+        <article key={p.id} className="bg-white rounded-2xl shadow p-3 hover:shadow-lg transition cursor-pointer" onClick={()=>setSelectedProduct(p)}>
+          <div className="h-44 w-full overflow-hidden rounded-xl mb-3 bg-gray-50">
+            <img src={p.img} alt={p.name} className="w-full h-full object-cover" />
+          </div>
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-bold text-sm">{p.name}</h3>
+              <div className="text-xs text-gray-500">{p.category}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-extrabold">{p.price.toLocaleString()} د.ع</div>
+              <div className={`text-xs mt-1 ${p.stock>0? 'text-green-600':'text-red-500'}`}>{p.stock>0? `متوفر: ${p.stock}`: 'نفذت الكمية'}</div>
+            </div>
+          </div>
+        </article>
+      ))}
+    </section>
 
+    <footer className="mt-8 text-center text-sm text-gray-500">© TITAN.OS — نسخة تجريبية. اطلب ربط Backend للإنتاج.</footer>
+  </main>
+
+  {/* Product Modal */}
+  {selectedProduct && (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={(e)=>{ if(e.target===e.currentTarget) setSelectedProduct(null); }}>
+      <div className="bg-white max-w-xl w-full rounded-2xl p-6 shadow-lg">
+        <div className="flex gap-4">
+          <img src={selectedProduct.img} alt="" className="w-40 h-40 object-cover rounded-lg" />
+          <div className="flex-1">
+            <h2 className="font-extrabold text-lg">{selectedProduct.name}</h2>
+            <div className="text-yellow-600 font-black text-xl mt-2">{selectedProduct.price.toLocaleString()} د.ع</div>
+            <div className="text-sm text-gray-500 mt-2">المخزون: {selectedProduct.stock}</div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-semibold mb-1">اللون</label>
+              <div className="flex gap-2 flex-wrap">
+                {selectedProduct.colors.map(c => (
+                  <button key={c} className="px-3 py-1 border rounded bg-gray-50" onClick={()=>{ /* noop, local selection below */ }}>{c}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center gap-3">
+              <label className="text-sm font-semibold">الكمية</label>
+              <QtySelector max={selectedProduct.stock} onAdd={(qty,color,size)=>{
+                addToCart(selectedProduct, { qty, color, size });
+                setSelectedProduct(null);
+              }} />
+            </div>
+
+            <div className="mt-4">
+              <button className="px-4 py-2 bg-black text-yellow-300 rounded-lg font-bold" onClick={()=>{ addToCart(selectedProduct, { qty:1 }); setSelectedProduct(null); }}>أضف للسلة</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* Cart Drawer */}
+  <div className={`fixed top-0 ${isCartOpen? 'right-0':'-right-full'} h-full w-full sm:w-[420px] bg-white shadow-2xl z-50 transition-all`} style={{direction:'rtl'}}>
+    <div className="p-4 flex items-center justify-between border-b">
+      <h3 className="font-bold">حقيبة التسوق ({cart.length})</h3>
+      <div className="flex items-center gap-2">
+        <div className="text-sm">{cartTotal.toLocaleString()} د.ع</div>
+        <button className="px-3 py-1" onClick={()=>setCartOpen(false)}>إغلاق</button>
+      </div>
+    </div>
+    <div className="p-4 overflow-auto h-[70vh]">
+      {cart.length===0 && <div className="text-center text-gray-500">السلة فارغة</div>}
+      {cart.map(item => (
+        <div key={item.cartId} className="flex items-center gap-3 border-b py-3">
+          <img src={item.img} alt="" className="w-14 h-14 object-cover rounded" />
+          <div className="flex-1">
+            <div className="font-semibold">{item.name}</div>
+            <div className="text-xs text-gray-500">{item.color||'-'} | {item.size||'-'}</div>
+            <div className="mt-2 flex items-center gap-2">
+              <QtySmall value={item.qty} onChange={(v)=>updateCartQty(item.cartId, v)} max={products.find(p=>p.id===item.productId)?.stock + item.qty || 99} />
+              <div className="font-extrabold">{(item.price*item.qty).toLocaleString()} د.ع</div>
+            </div>
+          </div>
+          <div>
+            <button className="text-red-500" onClick={()=>removeCartItem(item.cartId)}>حذف</button>
+          </div>
+        </div>
+      ))}
+    </div>
+    <div className="p-4 border-t">
+      <div className="flex justify-between items-center font-extrabold mb-3">الإجمالي <span>{cartTotal.toLocaleString()} د.ع</span></div>
+      <CheckoutForm onSubmit={submitOrder} disabled={cart.length===0} />
+    </div>
+  </div>
+
+  {/* Admin Panel Modal */}
+  <div className="fixed bottom-6 left-6 z-40">
+    {!isAdmin ? (
+      <button className="px-4 py-2 bg-white border rounded-lg shadow" onClick={()=>setAdminLock(true)}>لوحة الادمن</button>
+    ) : (
+      <div className="bg-white p-3 rounded-lg shadow">
+        <div className="flex gap-2 items-center"><b>مرحبا، المدير</b></div>
+        <div className="mt-2 flex gap-2">
+          <button className="px-3 py-1 bg-red-100 rounded" onClick={logoutAdmin}>خروج</button>
+          <button className="px-3 py-1 bg-gray-100 rounded" onClick={()=>{ const href = ordersToCSV(orders); const a = document.createElement('a'); a.href=href; a.download='orders.csv'; a.click(); }}>تصدير CSV</button>
+        </div>
+      </div>
+    )}
+  </div>
+
+  {/* Admin Lock Dialog */}
+  {adminLock && !isAdmin && (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center" onClick={(e)=>{ if(e.target===e.currentTarget) setAdminLock(false); }}>
+      <div className="bg-white rounded p-6 w-full max-w-sm">
+        <h3 className="font-bold mb-2">🔐 دخول الادمن</h3>
+        <AdminLogin onCancel={()=>setAdminLock(false)} onLogin={(pin)=>{ tryAdminLogin(pin); setAdminLock(false); }} attempts={adminAttempts} />
+      </div>
+    </div>
+  )}
+
+  {/* Admin Dashboard overlay (simple) */}
+  {isAdmin && (
+    <div className="fixed inset-0 bg-black/40 z-40 p-8 overflow-auto">
+      <div className="max-w-4xl mx-auto bg-white rounded p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-extrabold">لوحة التحكم - الطلبات ({orders.length})</h2>
+          <div className="flex gap-2">
+            <button className="px-3 py-1 bg-gray-100 rounded" onClick={()=>setIsAdmin(false)}>إغلاق</button>
+            <button className="px-3 py-1 bg-green-100 rounded" onClick={exportOrdersCSV}>تصدير CSV</button>
+          </div>
+        </div>
+        <div>
+          <table className="w-full text-sm">
+            <thead className="text-right">
+              <tr className="bg-gray-50"><th className="p-2">Order ID</th><th>الزبون</th><th>العناصر</th><th>الإجمالي</th><th>الحالة</th><th>إجراء</th></tr>
+            </thead>
+            <tbody>
+              {orders.map(o => (
+                <tr key={o.id} className="border-b">
+                  <td className="p-2">{o.id}<br/><small className="text-gray-400">{o.timestamp}</small></td>
+                  <td>{o.customer.name}<br/><small>{o.customer.phone}</small></td>
+                  <td>{o.items}</td>
+                  <td className="font-bold">{o.total.toLocaleString()} د.ع</td>
+                  <td>
+                    <select value={o.status} onChange={(e)=>updateOrderStatus(o.id, e.target.value)} className="border px-2 py-1 rounded">
+                      <option>قيد الانتظار</option>
+                      <option>تم الشحن</option>
+                      <option>واصل</option>
+                      <option>ملغي</option>
+                    </select>
+                  </td>
+                  <td><button className="text-red-500" onClick={()=>deleteOrder(o.id)}>حذف</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )}
 </div>
 
-<script>
-/**
- * TITAN CORE | Cyber-Architecture v2.0
- * Developed with Reactive State & Security First Approach
- */
+); }
 
-const Titan = (() => {
-    
-    // --- 1. REACTIVE STATE ENGINE ---
-    // هذا المحرك يراقب البيانات ويحدث الواجهة تلقائياً عند أي تغيير
-    const Store = {
-        data: {
-            products: JSON.parse(localStorage.getItem('tt_inventory')) || [
-                {id: 101, n: "ساعة رولكس دايتونا", p: 450000, c: "ساعات", stock: 5, img: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=500", opts: {colors:['Gold','Silver'], sizes:['40mm']}},
-                {id: 102, n: "عطر توم فورد عود", p: 210000, c: "عطور", stock: 12, img: "https://images.unsplash.com/photo-1594035910387-fea477942698?w=500", opts: {colors:['Standard'], sizes:['50ml','100ml']}},
-                {id: 103, n: "نايكي إير جوردن", p: 85000, c: "أحذية", stock: 8, img: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=500", opts: {colors:['Red','Black','White'], sizes:['40','41','42','43','44']}},
-                {id: 104, n: "سماعة آبل ماكس", p: 320000, c: "إلكترونيات", stock: 4, img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500", opts: {colors:['Space Gray','Silver'], sizes:['Standard']}}
-            ],
-            cart: JSON.parse(localStorage.getItem('tt_cart')) || [],
-            orders: JSON.parse(localStorage.getItem('tt_orders')) || [],
-            activeCat: 'الكل'
-        },
-        
-        save() {
-            localStorage.setItem('tt_inventory', JSON.stringify(this.data.products));
-            localStorage.setItem('tt_cart', JSON.stringify(this.data.cart));
-            localStorage.setItem('tt_orders', JSON.stringify(this.data.orders));
-            UI.UpdateBadges();
-        }
-    };
+// Small reusable components function QtySelector({ max=99, onAdd }){ const [qty, setQty] = useState(1); const inc = ()=> setQty(q=> Math.min(max, q+1)); const dec = ()=> setQty(q=> Math.max(1, q-1)); return ( <div className="flex items-center gap-2"> <button onClick={dec} className="px-2 py-1 border rounded">−</button> <input value={qty} onChange={e=>setQty(Math.max(1, Number(e.target.value)||1))} className="w-14 text-center border rounded px-2 py-1" /> <button onClick={inc} className="px-2 py-1 border rounded">+</button> <button onClick={()=>onAdd(qty)} className="px-3 py-1 bg-black text-yellow-300 rounded">إضافة</button> </div> ); }
 
-    // --- 2. SECURITY LAYER ---
-    const Security = {
-        sanitize: (str) => {
-            const div = document.createElement('div');
-            div.innerText = str;
-            return div.innerHTML.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
-        },
-        
-        generateHash: () => {
-            return 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-        },
+function QtySmall({ value, onChange, max=99 }){ return ( <div className="flex items-center gap-1"> <button onClick={()=>onChange(Math.max(1, value-1))} className="px-2 py-1 border rounded">−</button> <div className="px-3 py-1 border rounded">{value}</div> <button onClick={()=>onChange(Math.min(max, value+1))} className="px-2 py-1 border rounded">+</button> </div> ); }
 
-        initAdminLock: () => {
-            let clicks = 0;
-            document.getElementById('admin-lock').addEventListener('click', () => {
-                clicks++;
-                if (clicks === 5) {
-                    const pin = prompt("🔐 SECURE ACCESS REQUIRED\nEnter PIN:");
-                    if (pin === "1122") Admin.init();
-                    clicks = 0;
-                }
-            });
-        }
-    };
+function CheckoutForm({ onSubmit, disabled }){ const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [city, setCity] = useState("بغداد"); const [addr, setAddr] = useState("");
 
-    // --- 3. UI RENDERER ---
-    const UI = {
-        init: () => {
-            UI.RenderCats();
-            UI.RenderGrid();
-            UI.UpdateBadges();
-            Security.initAdminLock();
-            emailjs.init("YXDPYRNxazZ45eYWS");
-        },
+return ( <div className="flex flex-col gap-2"> <input placeholder="الاسم الكامل" value={name} onChange={e=>setName(e.target.value)} className="px-3 py-2 border rounded" /> <input placeholder="رقم الهاتف" value={phone} onChange={e=>setPhone(e.target.value)} className="px-3 py-2 border rounded" /> <select value={city} onChange={e=>setCity(e.target.value)} className="px-3 py-2 border rounded"> <option>بغداد</option><option>البصرة</option><option>أربيل</option><option>النجف</option><option>الموصل</option> </select> <textarea placeholder="أقرب نقطة دالة..." value={addr} onChange={e=>setAddr(e.target.value)} className="px-3 py-2 border rounded" /> <button disabled={disabled} onClick={()=>onSubmit({ name, phone, city, addr })} className={px-4 py-2 rounded ${disabled? 'bg-gray-300':'bg-black text-yellow-300 font-bold'}}>🚀 إرسال الطلب</button> </div> ); }
 
-        RenderCats: () => {
-            const cats = ['الكل', ...new Set(Store.data.products.map(p => p.c))];
-            document.getElementById('category-container').innerHTML = cats.map(c => 
-                `<div class="cat-chip ${Store.data.activeCat === c ? 'active' : ''}" onclick="Titan.Logic.Filter('${c}')">${c}</div>`
-            ).join('');
-        },
+function AdminLogin({ onLogin, onCancel, attempts }){ const [pin, setPin] = useState(""); return ( <div> <input placeholder="أدخل PIN" value={pin} onChange={e=>setPin(e.target.value)} className="px-3 py-2 border rounded w-full mb-2" /> <div className="flex gap-2"> <button className="px-3 py-1 bg-black text-yellow-300 rounded" onClick={()=>onLogin(pin)}>دخول</button> <button className="px-3 py-1 bg-gray-100 rounded" onClick={onCancel}>إلغاء</button> </div> <div className="text-xs text-gray-500 mt-2">محاولات: {attempts.tries || 0} / 3</div> {attempts.lockedUntil && <div className="text-xs text-red-500">مقفول حتى {new Date(attempts.lockedUntil).toLocaleTimeString()}</div>} </div> ); }
 
-        RenderGrid: () => {
-            const list = Store.data.activeCat === 'الكل' ? Store.data.products : Store.data.products.filter(p => p.c === Store.data.activeCat);
-            document.getElementById('products-container').innerHTML = list.map(p => `
-                <div class="product-card" onclick="Titan.UI.ProductDetails(${p.id})">
-                    <div class="card-img-box">
-                        <img src="${p.img}" loading="lazy">
-                        <span class="stock-badge ${p.stock < 5 ? 'stock-low' : ''}">${p.stock > 0 ? 'متوفر: '+p.stock : 'نفذت الكمية'}</span>
-                    </div>
-                    <div class="card-info">
-                        <div class="card-title">${p.n}</div>
-                        <div class="card-price">${p.p.toLocaleString()} د.ع</div>
-                    </div>
-                </div>
-            `).join('');
-        },
+// Render to page (for local demo) const container = document.getElementById('root'); if (container) createRoot(container).render(<App />);
 
-        ProductDetails: (id) => {
-            const p = Store.data.products.find(x => x.id === id);
-            if(p.stock <= 0) return alert("عذراً، هذا المنتج غير متوفر حالياً.");
-            
-            // Default selection
-            let selColor = p.opts.colors[0], selSize = p.opts.sizes[0];
-            
-            const renderModal = () => `
-                <div style="display:flex; gap:15px; margin-bottom:20px;">
-                    <img src="${p.img}" style="width:80px; height:80px; border-radius:12px; object-fit:cover;">
-                    <div>
-                        <h3 style="margin:0; font-size:16px;">${p.n}</h3>
-                        <div style="color:var(--accent); font-weight:900; font-size:18px;">${p.p.toLocaleString()} د.ع</div>
-                        <div style="font-size:11px; color:#666;">المخزون المتبقي: ${p.stock}</div>
-                    </div>
-                </div>
-                
-                <div class="variant-group">
-                    <label class="v-label">اللون</label>
-                    <div class="v-options" id="color-opts">
-                        ${p.opts.colors.map(c => `<div class="v-chip ${c===selColor?'selected':''}" onclick="selColor='${c}'; this.parentNode.childNodes.forEach(n=>n.classList?.remove('selected')); this.classList.add('selected');">${c}</div>`).join('')}
-                    </div>
-                </div>
-                
-                <div class="variant-group">
-                    <label class="v-label">القياس / الحجم</label>
-                    <div class="v-options" id="size-opts">
-                        ${p.opts.sizes.map(s => `<div class="v-chip ${s===selSize?'selected':''}" onclick="selSize='${s}'; this.parentNode.childNodes.forEach(n=>n.classList?.remove('selected')); this.classList.add('selected');">${s}</div>`).join('')}
-                    </div>
-                </div>
-
-                <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="Titan.Logic.AddToCart(${p.id}, selColor, selSize)">
-                    <i class="fa-solid fa-cart-plus"></i> تأكيد وإضافة للسلة
-                </button>
-            `;
-            
-            // Expose vars to window scope temporarily for the inline onclick (hacky but compact)
-            window.selColor = selColor; window.selSize = selSize;
-            UI.OpenModal(renderModal());
-        },
-
-        OpenCart: () => {
-            if(Store.data.cart.length === 0) return alert("السلة فارغة!");
-            const total = Store.data.cart.reduce((a,b)=>a+b.p,0);
-            
-            const html = `
-                <h3 style="margin-top:0">حقيبة التسوق (${Store.data.cart.length})</h3>
-                <div style="max-height:400px; overflow-y:auto; padding-right:5px;">
-                    ${Store.data.cart.map((item, idx) => `
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding:10px 0;">
-                            <div style="display:flex; gap:10px; align-items:center;">
-                                <div style="width:40px; height:40px; background:#f0f0f0; border-radius:8px; overflow:hidden;"><img src="${item.img}" style="width:100%;"></div>
-                                <div>
-                                    <div style="font-weight:bold; font-size:12px;">${item.n}</div>
-                                    <div style="font-size:10px; color:#888;">${item.selColor} | ${item.selSize}</div>
-                                </div>
-                            </div>
-                            <div style="text-align:left;">
-                                <div style="font-weight:bold;">${item.p.toLocaleString()}</div>
-                                <i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer; font-size:12px; margin-top:5px;" onclick="Titan.Logic.RemoveFromCart(${item.cartId})"></i>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                <div style="margin-top:20px; border-top:2px dashed #eee; padding-top:15px;">
-                    <div style="display:flex; justify-content:space-between; font-weight:900; font-size:16px;">
-                        <span>الإجمالي الكلي:</span>
-                        <span>${total.toLocaleString()} د.ع</span>
-                    </div>
-                    <button class="btn btn-primary" style="width:100%; margin-top:15px;" onclick="Titan.UI.OpenCheckout()">متابعة الشراء</button>
-                </div>
-            `;
-            UI.OpenModal(html);
-        },
-
-        OpenCheckout: () => {
-            const html = `
-                <h3><i class="fa-solid fa-truck-fast"></i> بيانات التوصيل</h3>
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    <input id="cx-name" class="input-field" placeholder="الاسم الكامل">
-                    <input id="cx-phone" class="input-field" type="tel" placeholder="رقم الهاتف (ضروري)">
-                    <select id="cx-city" class="input-field">
-                        <option>بغداد</option><option>البصرة</option><option>أربيل</option><option>النجف</option><option>الموصل</option>
-                    </select>
-                    <textarea id="cx-addr" class="input-field" rows="3" placeholder="أقرب نقطة دالة..."></textarea>
-                    <button class="btn btn-primary" onclick="Titan.Logic.SubmitOrder()">🚀 إرسال الطلب</button>
-                </div>
-            `;
-            UI.OpenModal(html);
-        },
-
-        OpenOrders: () => {
-            if(Store.data.orders.length === 0) return alert("لا توجد طلبات سابقة.");
-            const html = `
-                <h3>سجل طلباتي</h3>
-                ${Store.data.orders.map(o => `
-                    <div style="background:#f9f9f9; padding:12px; border-radius:8px; margin-bottom:10px; border:1px solid #eee;">
-                        <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:12px;">
-                            <span>#${o.id}</span>
-                            <span style="color:${o.status==='ملغي'?'red':o.status==='واصل'?'green':'orange'}">${o.status}</span>
-                        </div>
-                        <div style="font-size:11px; margin:5px 0; color:#555;">${o.items}</div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                            <b>${o.total.toLocaleString()} د.ع</b>
-                            ${o.status === 'قيد الانتظار' ? `<button class="btn btn-danger" style="padding:4px 10px; font-size:10px;" onclick="Titan.Logic.CancelOrder('${o.id}')">إلغاء الطلب</button>` : ''}
-                        </div>
-                    </div>
-                `).join('')}
-            `;
-            UI.OpenModal(html);
-        },
-
-        OpenModal: (content) => {
-            document.getElementById('modal-content').innerHTML = content;
-            const backdrop = document.getElementById('main-modal');
-            backdrop.style.display = 'flex';
-            setTimeout(() => backdrop.classList.add('open'), 10);
-        },
-        CloseModal: () => {
-            const backdrop = document.getElementById('main-modal');
-            backdrop.classList.remove('open');
-            setTimeout(() => backdrop.style.display = 'none', 300);
-        },
-        UpdateBadges: () => {
-            document.getElementById('cart-counter').innerText = Store.data.cart.length;
-        }
-    };
-
-    // --- 4. BUSINESS LOGIC ---
-    const Logic = {
-        Filter: (c) => { Store.data.activeCat = c; UI.RenderCats(); UI.RenderGrid(); },
-        
-        AddToCart: (pid, color, size) => {
-            const product = Store.data.products.find(p => p.id === pid);
-            if(product.stock <= 0) return alert("نفذت الكمية!");
-
-            Store.data.cart.push({
-                ...product,
-                selColor: window.selColor, // Taken from global scope
-                selSize: window.selSize,
-                cartId: Date.now()
-            });
-            
-            // Fake stock reduction locally for UI effect
-            product.stock--;
-            
-            Store.save();
-            UI.CloseModal();
-            UI.RenderGrid(); // Re-render to update stock badges
-            // Custom toast
-            const toast = document.createElement('div');
-            toast.innerText = `✅ تمت إضافة ${product.n}`;
-            toast.style = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#000; color:#fff; padding:10px 20px; border-radius:30px; z-index:9999;";
-            document.body.appendChild(toast);
-            setTimeout(()=>toast.remove(), 2000);
-        },
-
-        RemoveFromCart: (cid) => {
-            // Restore stock (logic simplified)
-            const item = Store.data.cart.find(i => i.cartId === cid);
-            const prod = Store.data.products.find(p => p.id === item.id);
-            if(prod) prod.stock++;
-            
-            Store.data.cart = Store.data.cart.filter(c => c.cartId !== cid);
-            Store.save();
-            UI.OpenCart(); // Refresh cart view
-            UI.RenderGrid();
-        },
-
-        SubmitOrder: () => {
-            const name = Security.sanitize(document.getElementById('cx-name').value);
-            const phone = Security.sanitize(document.getElementById('cx-phone').value);
-            const city = document.getElementById('cx-city').value;
-            const addr = Security.sanitize(document.getElementById('cx-addr').value);
-
-            if(!name || phone.length < 10) return alert("يرجى إدخال بيانات صحيحة.");
-
-            const order = {
-                id: Security.generateHash(),
-                customer: { name, phone, city, addr },
-                items: Store.data.cart.map(i => `${i.n} (${i.selColor}/${i.selSize})`).join(' + '),
-                total: Store.data.cart.reduce((a,b)=>a+b.p,0),
-                status: 'قيد الانتظار',
-                timestamp: new Date().toLocaleString()
-            };
-
-            // Send Email (Simulated)
-            emailjs.send("service_ga7ytjo", "template_lgvpsns", {
-                order_id: order.id,
-                from_name: name,
-                message: `${order.items} | Total: ${order.total}`,
-                phone: phone
-            });
-
-            Store.data.orders.unshift(order);
-            Store.data.cart = [];
-            Store.save();
-            UI.CloseModal();
-            alert("تم استلام طلبك بنجاح! رقم التتبع: " + order.id);
-        },
-
-        CancelOrder: (oid) => {
-            if(!confirm("هل أنت متأكد؟")) return;
-            const order = Store.data.orders.find(o => o.id === oid);
-            if(order) {
-                order.status = 'ملغي';
-                Store.save();
-                UI.OpenOrders();
-            }
-        }
-    };
-
-    // --- 5. ADMIN SYSTEM ---
-    const Admin = {
-        init: () => {
-            document.getElementById('root').style.display = 'none';
-            document.getElementById('admin-interface').style.display = 'block';
-            Admin.renderDashboard();
-        },
-        renderDashboard: () => {
-            // Stats
-            document.getElementById('kpi-revenue').innerText = Store.data.orders.filter(o=>o.status!=='ملغي').reduce((a,b)=>a+b.total,0).toLocaleString();
-            document.getElementById('kpi-orders').innerText = Store.data.orders.length;
-            document.getElementById('kpi-stock').innerText = Store.data.products.reduce((a,b)=>a+b.stock,0);
-
-            // Table
-            const tbody = document.getElementById('admin-orders-list');
-            tbody.innerHTML = Store.data.orders.map(o => `
-                <tr style="border-bottom:1px solid #eee;">
-                    <td style="padding:10px;">${o.id}</td>
-                    <td>${o.customer.name}<br><small>${o.customer.phone}</small></td>
-                    <td>
-                        <select class="status-select" onchange="Titan.Admin.updateStatus('${o.id}', this.value)" style="background:${o.status==='ملغي'?'#fee2e2':'#fff'}">
-                            <option ${o.status==='قيد الانتظار'?'selected':''}>قيد الانتظار</option>
-                            <option ${o.status==='تم الشحن'?'selected':''}>تم الشحن</option>
-                            <option ${o.status==='واصل'?'selected':''}>واصل</option>
-                            <option ${o.status==='ملغي'?'selected':''}>ملغي</option>
-                        </select>
-                    </td>
-                    <td><i class="fa-solid fa-trash" style="color:red; cursor:pointer;" onclick="Titan.Admin.deleteOrder('${o.id}')"></i></td>
-                </tr>
-            `).join('');
-        },
-        updateStatus: (oid, val) => {
-            const order = Store.data.orders.find(o => o.id === oid);
-            order.status = val;
-            Store.save();
-            Admin.renderDashboard();
-        },
-        deleteOrder: (oid) => {
-            if(confirm("حذف نهائي؟")) {
-                Store.data.orders = Store.data.orders.filter(o => o.id !== oid);
-                Store.save();
-                Admin.renderDashboard();
-            }
-        }
-    };
-
-    // Public API
-    return { UI, Logic, Admin };
-
-})();
-
-// Boot System
-window.onload = Titan.UI.init;
-
-</script>
-</body>
-</html>
+export default App;
